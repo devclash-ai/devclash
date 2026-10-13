@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private Support
+    url: https://devclash.ai/support
+    about: Account help and private security reports. Never post credentials in public issues.
+  - name: Download DevClash
+    url: https://devclash.ai/download
+    about: Get the current Mac, Windows or Linux release.

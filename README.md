@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://devclash.ai"><img src="assets/devclash-header.png" alt="DevClash — Build With AI. Get Seen For It. Private AI usage tracking and a community for builders." width="1200"></a>
+  <a href="https://devclash.ai"><img src="assets/devclash-header.svg" alt="DevClash — Build With AI. Get Seen For It. Private AI usage tracking and a community for builders." width="1200"></a>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@ DevClash brings AI usage from **Claude, Codex, Cursor and OpenCode** into a desk
 
 Keep your activity local, or sign in and enable cloud sync to save your history across devices. Join the community when you want to share your profile, showcase projects and take part in Rank Battle.
 
-> This is DevClash's public product and feedback repository. Application source code is maintained privately. The header is an illustrative product demo, not a screenshot of a user's activity.
+> This is DevClash's public product and feedback repository. Application source code is maintained privately.
 
 ## Built For Your Daily Workflow
 

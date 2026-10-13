@@ -54,7 +54,7 @@ Mac releases are Developer ID signed and notarized. Windows installers are signe
 
 The app includes **Check for Updates** and an option to disable automatic updates. The website always links to the current published packages.
 
-[Release Notes And Existing Downloads](https://github.com/ccycv/devclash-releases/releases) · [Installation Help](https://devclash.ai/download#installation)
+[GitHub Releases And Installers](https://github.com/devclash-ai/devclash/releases) · [Installation Help](https://devclash.ai/download#installation)
 
 ## Get Started
 
@@ -85,7 +85,7 @@ For account-specific help or a potential security issue, use [private support](h
 
 ## About This Repository
 
-This repository contains public product information, brand assets and community feedback. It does not contain the application source or replace the existing download and update infrastructure.
+This repository contains public product information, brand assets and community feedback. Signed app installers and release notes are available in [Releases](https://github.com/devclash-ai/devclash/releases). This repository does not contain the application source. Existing automatic updates continue through the original release infrastructure.
 
 DevClash is built by **FUTUREFORGE LABS SRL**. Product names and logos belong to their respective owners. Publishing this repository does not grant an open-source license to the DevClash application or its brand assets.
 

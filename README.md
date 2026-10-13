@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://devclash.ai"><img src="assets/devclash-header.svg" alt="DevClash — Build With AI. Get Seen For It. Private AI usage tracking and a community for builders." width="1200"></a>
+  <a href="https://devclash.ai"><img src="assets/devclash-header.png" alt="DevClash — Build With AI. Get Seen For It. Private AI usage tracking and a community for builders." width="1200"></a>
 </p>
 
 <p align="center">

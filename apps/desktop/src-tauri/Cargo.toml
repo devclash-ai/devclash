@@ -1,0 +1,60 @@
+[package]
+name = "devclash-desktop"
+version = "0.1.0-beta.5"
+edition = "2021"
+description = "DevClash desktop usage tracker"
+license = "MIT"
+[lib]
+name = "devclash_desktop"
+crate-type = ["staticlib", "cdylib", "rlib"]
+[features]
+# Isolated upgrade fixtures only; never enabled by the release workflow.
+updater-qa = []
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png", "macos-private-api"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-clipboard-manager = "2"
+# Verify signed release bytes and the version before replacing an installed package.
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "6"
+walkdir = "2"
+csv = "1"
+reqwest = { version = "0.13", features = ["blocking", "json"] }
+# OpenUsage's pricing aliases include lookahead; reuse those rules without rewriting them.
+fancy-regex = "0.19"
+# Bundle SQLite so OpenCode collection also works in Windows/Linux binaries without a CLI install.
+rusqlite = { version = "0.40", features = ["bundled"] }
+# Cloud sessions belong in the OS credential store, never webview localStorage.
+keyring = { version = "3.6", features = ["apple-native", "windows-native", "linux-native-sync-persistent", "crypto-rust", "vendored"] }
+# Hash source identifiers before uploading, keeping log filenames out of cloud records.
+sha2 = "0.10"
+# Decode local provider JWT expiry/subject claims without adding an authentication stack.
+base64 = "0.22"
+# Claude Desktop's Windows safeStorage uses authenticated AES-GCM after OS key unwrapping.
+aes-gcm = "0.10"
+# Match Electron's macOS safeStorage format; reuse the locked RustCrypto AES/CBC/SHA1 crates.
+aes = "0.8"
+cbc = { version = "0.1", features = ["alloc"] }
+pbkdf2 = "0.12"
+sha1 = "0.10"
+# Clear transient Desktop decryption buffers; provider credentials are never persisted.
+zeroize = "1.9"
+# Open only the configured HTTPS profile/rank pages using the platform browser.
+open = "5"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# Already locked through keyring; query existing credentials without background permission prompts.
+core-foundation = "0.10"
+security-framework-sys = "2.17"
+
+[target.'cfg(windows)'.dependencies]
+# Verify current-user NSIS registration before unattended updates; already present in the lockfile.
+winreg = "0.55"
+# Read the current user's existing Claude Desktop encryption key through Windows DPAPI.
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }

@@ -1,0 +1,12 @@
+**/node_modules/
+**/target/
+**/gen/
+**/dist/
+**/artifacts/
+.env
+.env.*
+*.p8
+*.p12
+*.pfx
+*.key
+.DS_Store

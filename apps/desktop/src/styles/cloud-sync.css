@@ -1,0 +1,74 @@
+/* Explicitly drawn controls stay visible in WebKitGTK and platform themes. */
+.cloud-account-dialog { background: var(--bg); color: var(--text); border-color: var(--border); }
+.cloud-account-dialog p, .cloud-account-dialog .cloud-option small { color: var(--muted); }
+.cloud-account-dialog .cloud-email { color: var(--text); }
+.cloud-account-dialog .dialog-icon { background: var(--subtle); }
+.cloud-account-dialog .cloud-project-context, .cloud-account-dialog .settings-links { border-color: var(--border); }
+.cloud-account-dialog select, .cloud-account-dialog input { background: var(--raised); color: var(--text); border-color: var(--border); }
+.cloud-account-dialog .cloud-option input { appearance: auto; }
+.cloud-sync-card { margin-top: 22px; padding: 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--subtle); }
+.cloud-sync-heading { display: flex; align-items: center; gap: 10px; }
+.cloud-sync-heading > svg { color: var(--blue); }
+.cloud-sync-heading > div { flex: 1; min-width: 0; }
+.cloud-sync-heading h2 { font-size: 16px; margin-bottom: 4px; }
+.cloud-sync-heading > div > span { display: block; font-size: 12px; line-height: 1.4; color: var(--muted); }
+.cloud-sync-switch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 44px; border-radius: 8px; padding: 4px; }
+.cloud-sync-switch-label { min-width: 22px; font-size: 13px; font-weight: 650; color: var(--text); }
+.cloud-sync-track { display: block; position: relative; width: 48px; height: 28px; border: 1px solid #697789; background: #697789; border-radius: 20px; }
+.cloud-sync-track > span { display: block; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0003; transition: transform .15s; }
+.cloud-sync-switch.is-on .cloud-sync-track { background: #087bff; border-color: #087bff; }
+.cloud-sync-switch.is-on .cloud-sync-track > span { transform: translateX(20px); }
+.cloud-sync-switch:disabled { opacity: .7; cursor: wait; }
+.cloud-sync-description { margin-top: 15px; }
+.cloud-sync-description p { font-size: 13px; line-height: 1.55; }
+.cloud-sync-description .cloud-sync-privacy { display: flex; align-items: flex-start; gap: 7px; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--border); font-size: 12px; }
+.cloud-sync-privacy svg { margin-top: 2px; }
+.cloud-sync-card .cloud-sync-hint { margin-top: 14px; font-size: 12px; line-height: 1.45; color: var(--text); }
+.sync-tone-off .status-dot { background: #8492a3; }
+.sync-tone-pending .status-dot { background: #ca8a04; }
+.sync-tone-error .status-dot { background: #e35361; }
+.sync-tone-active .status-dot { background: #30b488; }
+.sync-status-button, .sync-status-button > span { display: flex; align-items: center; gap: 7px; }
+.sync-status-button { min-height: 36px; padding: 0 8px; margin-left: -8px; text-align: left; border-radius: 8px; color: var(--muted); transition: color .15s ease, background-color .15s ease; }
+.sync-status-button:hover { text-decoration: none; color: var(--text); background: var(--subtle); }
+.sync-status-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sync-status-button > span { white-space: normal; font-size: 13px; }
+.sync-invitation { display: flex; align-items: center; gap: 12px; margin: 0 22px 14px; padding: 15px; border: 1px solid var(--border); background: var(--subtle); border-radius: 10px; flex-shrink: 0; }
+.sync-invitation > svg { color: var(--blue); }
+.sync-invitation > div { flex: 1; min-width: 0; }
+.sync-invitation strong { display: block; font-size: 14px; margin-bottom: 5px; }
+.sync-invitation p { color: var(--muted); font-size: 12px; line-height: 1.45; }
+.sync-invitation .button.primary { padding: 10px 12px; font-size: 12px; }
+@media (max-width: 580px) {
+  .sync-invitation { display: grid; grid-template-columns: 22px 1fr; margin: 0 18px 12px; }
+  .sync-invitation .button { grid-column: 2; justify-self: start; }
+  .cloud-account-dialog { padding: 26px 22px; }
+  .cloud-sync-card { padding: 14px; }
+  .cloud-sync-heading > svg { display: none; }
+  .local-status { min-width: 0; gap: 6px; }
+  .dashboard-footer .footer-actions { flex-shrink: 0; }
+}
+@media (forced-colors: active) {
+  .cloud-sync-track { background: Canvas; border-color: ButtonText; }
+  .cloud-sync-track > span { background: ButtonText; }
+  .cloud-sync-switch.is-on .cloud-sync-track { background: Highlight; border-color: Highlight; }
+  .cloud-sync-switch.is-on .cloud-sync-track > span { background: HighlightText; }
+}
+.cloud-account-dialog h1 { padding-right: 28px; margin-bottom: 6px; font-size: 24px; }
+.cloud-account-dialog .cloud-email { font-size: 13px; font-weight: 400; color: var(--muted); }
+.cloud-sync-card .cloud-status { font-size: 13px; padding: 16px 0 9px; }
+.cloud-sync-meta { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; line-height: 1.5; color: var(--muted); }
+.cloud-sync-meta span:last-child { text-align: right; }
+.cloud-sync-now { margin-top: 12px; }
+.cloud-privacy-details { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 12px; }
+.cloud-account-dialog summary { cursor: pointer; color: var(--text); font-size: 13px; }
+.cloud-account-dialog summary:hover { color: var(--blue); }
+.cloud-account-dialog summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 4px; }
+.cloud-privacy-details p { margin-top: 10px; font-size: 12px; }
+.cloud-project-context { padding: 16px 0; border-bottom: 1px solid var(--border); }
+.cloud-project-context summary > span { display: inline-block; vertical-align: middle; margin-left: 5px; font-size: 14px; font-weight: 600; }
+.cloud-project-context summary small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.cloud-account-links { display: grid; grid-template-columns: 1fr 1fr; }
+.cloud-account-links .button { justify-content: center; padding: 10px; }
+.cloud-account-dialog .cloud-signout { margin-top: 18px; font-size: 12px; }
+.cloud-account-dialog .settings-links { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 12px; }

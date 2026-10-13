@@ -22,7 +22,7 @@ DevClash brings AI usage from **Claude, Codex, Cursor and OpenCode** into a desk
 
 Keep your activity local, or sign in and enable cloud sync to save your history across devices. Join the community when you want to share your profile, showcase projects and take part in Rank Battle.
 
-> This is DevClash's public product and feedback repository. Application source code is maintained privately.
+> DevClash's desktop app is open source under the [MIT license](LICENSE). Explore the [source and build instructions](apps/desktop/README.md).
 
 ## Built For Your Daily Workflow
 
@@ -85,8 +85,10 @@ For account-specific help or a potential security issue, use [private support](h
 
 ## About This Repository
 
-This repository contains public product information, brand assets and community feedback. Signed app installers and release notes are available in [Releases](https://github.com/devclash-ai/devclash/releases). This repository does not contain the application source. Existing automatic updates continue through the original release infrastructure.
+This repository contains the **MIT-licensed desktop application source**, bundled resources, build instructions and community feedback. Signed installers and release notes are available in [Releases](https://github.com/devclash-ai/devclash/releases). Existing automatic updates continue through the original release infrastructure.
 
-DevClash is built by **FUTUREFORGE LABS SRL**. Product names and logos belong to their respective owners. Publishing this repository does not grant an open-source license to the DevClash application or its brand assets.
+Start with [Building From Source](apps/desktop/README.md). The hosted backend and website are maintained separately and are not part of this source release. Private deployment configuration, credentials, signing keys and internal Git history are excluded.
+
+DevClash is built by **FUTUREFORGE LABS SRL**, with upstream OpenUsage attribution retained. See [LICENSE](LICENSE) and [LICENSE.upstream](apps/desktop/LICENSE.upstream). Product names and logos belong to their respective owners; the MIT software license does not grant trademark rights.
 
 <p align="center"><a href="https://devclash.ai"><strong>Build With AI. Get Seen For It.</strong></a></p>

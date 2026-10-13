@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "DevClash",
+  "version": "0.1.0-beta.5",
+  "identifier": "ai.devclash.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "DevClash",
+        "width": 668,
+        "height": 942,
+        "minWidth": 480,
+        "minHeight": 600,
+        "decorations": false,
+        "transparent": true,
+        "resizable": true,
+        "visible": false,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src ipc: http://ipc.localhost 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "createUpdaterArtifacts": true,
+    "resources": [
+      "../resources/OPENUSAGE-LICENSE.txt"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "requireSignedVersion": true,
+      "windows": {
+        "installMode": "quiet"
+      },
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENDRUYwN0FGMDNCQjFGOTEKUldTUkg3c0Ryd2Z2ekdHbmVzUjFWYk9IZHB1bEM1QVgvZHl6cFNJWUtqNWZ5SDAzQ0JtMGtqNEYK",
+      "endpoints": [
+        "https://api.devclash.ai/api/updates/{{target}}/{{arch}}/{{current_version}}?bundle={{bundle_type}}"
+      ]
+    }
+  }
+}

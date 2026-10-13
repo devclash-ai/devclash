@@ -1,0 +1,21 @@
+.concepts-page { min-height: 100vh; background: radial-gradient(ellipse at 50% 0, #f7f9fc, #e8edf4); color: #101117; padding-bottom: 24px; }
+.concepts-toolbar { height: 46px; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; background: #ffffffbb; border-bottom: 1px solid #dfe4ec; font-size: 12px; }
+.concepts-toolbar nav { display: flex; gap: 7px; }
+.concepts-toolbar nav button { padding: 6px 12px; border-radius: 6px; }
+.concepts-toolbar nav button.selected { color: var(--blue); background: #087bff0c; }
+.sample-badge { color: #748097; font-size: 11px; }
+.dashboard-board { display: flex; justify-content: center; gap: 44px; padding: 9px 32px 0; }
+.board-item { flex: 1; max-width: 668px; min-width: 0; }
+.board-item .dashboard { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 19px 35px #24374a25, 0 2px 4px #24374a08; height: 942px; min-height: 942px; }
+.board-caption { display: block; text-align: center; font-size: 21px; font-weight: 600; color: #647085; margin-bottom: 9px; }
+.widgets-board { padding: 28px 24px 0; max-width: 900px; margin: 0 auto; }
+.widgets-board h1 { font-size: 36px; font-weight: 650; letter-spacing: -.8px; text-align: center; }
+.widgets-board > p { color: #718094; margin-top: 8px; font-size: 15px; }
+.widget-grid { display: grid; grid-template-columns: repeat(2, 310px); justify-content: center; gap: 30px 70px; align-items: start; padding: 32px 0 0; }
+.widget-board-item { min-width: 0; }
+.widget-board-item .board-caption { text-align: left; font-size: 16px; font-weight: 550; color: #647085; margin-bottom: 12px; }
+.customization-board { padding: 16px 35px 0; }
+.customization-board > .customization { max-width: 1384px; height: calc(100vh - 85px); min-height: 650px; margin: 0 auto; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 18px 40px #18283e25; }
+@media (max-width: 780px) { .widget-grid { grid-template-columns: 310px; gap: 24px; } }
+@media (max-width: 1000px) { .dashboard-board { flex-direction: column; align-items: center; } .board-item { width: 100%; } .board-item .dashboard { min-height: 942px; } .widgets-board { padding-left: 32px; padding-right: 32px; } .customization-board { padding: 12px; } }
+@media (max-width: 650px) { .concepts-toolbar { height: auto; gap: 10px; flex-wrap: wrap; padding: 10px; } .sample-badge { width: 100%; text-align: center; } .dashboard-board { padding: 20px 12px; } .widget-grid { grid-template-columns: 1fr; } .widgets-board { padding: 24px 20px; } .board-minimal, .board-rank { padding-top: 0; } .board-minimal .floating-widget, .board-rank .floating-widget { max-width: 100%; } .customization-heading, .customization-body { padding-left: 20px; padding-right: 20px; } .customization-footer { padding-left: 20px; padding-right: 20px; } .customization-footer > span { display: none; } }

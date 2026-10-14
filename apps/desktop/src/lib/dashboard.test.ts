@@ -15,6 +15,8 @@ test('the desktop renders collected Cursor usage, zero and history failures with
   try {
     server = await createServer({ root: fileURLToPath(new URL('../..', import.meta.url)), server: { middlewareMode: true, hmr: false, ws: false, watch: null } });
     const { Dashboard } = await server.ssrLoadModule('/src/components/Dashboard.tsx') as typeof import('../components/Dashboard');
+    const { CloudDialog } = await server.ssrLoadModule('/src/components/CloudDialog.tsx') as typeof import('../components/CloudDialog');
+    const { localCloudStatus } = await server.ssrLoadModule('/src/lib/cloud.ts') as typeof import('./cloud');
     const { App } = await server.ssrLoadModule('/src/App.tsx') as typeof import('../App');
     const { SourceDialog, ProviderSourceField } = await server.ssrLoadModule('/src/components/SourceDialog.tsx') as typeof import('../components/SourceDialog');
     const app = renderToStaticMarkup(createElement(App));
@@ -55,6 +57,32 @@ test('the desktop renders collected Cursor usage, zero and history failures with
       preferences, snapshot, totals: aggregateUsage(snapshot, 'today', [...prefs.enabledProviders], now), period: 'today', theme: 'light',
       setPeriod: noop, onCustomize: noop, onRefresh: noop, onAccount: noop, onWidget: noop, onShare: noop, onRank: noop,
     }));
+    const joinDashboard = (joinState: 'invitation' | 'pending' | 'joined', syncEnabled = false) => renderToStaticMarkup(createElement(Dashboard, {
+      preferences, snapshot, totals: aggregateUsage(snapshot, 'today', [...prefs.enabledProviders], now), period: 'today', theme: 'dark', connected: joinState === 'joined', joinState, syncEnabled,
+      setPeriod: noop, onCustomize: noop, onRefresh: noop, onAccount: noop, onWidget: noop, onShare: noop, onRank: noop,
+    }));
+    const invitation = joinDashboard('invitation');
+    assert.match(invitation, /Join The Leaderboard/);
+    assert.match(invitation, /Join &amp; Enable Sync/);
+    assert.match(invitation, /Joining enables Cloud Sync/);
+    assert.ok(invitation.indexOf('usage-summary') < invitation.indexOf('leaderboard-invitation'));
+    assert.ok(invitation.indexOf('leaderboard-invitation') < invitation.indexOf('providers-section'));
+    assert.match(invitation, /420 tokens/);
+    assert.match(joinDashboard('pending'), /Continue Joining/);
+    const pendingExistingMembership = renderToStaticMarkup(createElement(CloudDialog, {
+      type: 'rank', status: { ...localCloudStatus, configured: true, ranked: true, joinPending: true, user: { id: 'native-account', email: 'qa@example.invalid' } },
+      join: { request: null, busy: false, error: '', start: async () => {} }, onChange: noop, onView: noop, onClose: noop,
+    }));
+    assert.match(pendingExistingMembership, /Waiting for Join Confirmation/);
+    assert.match(pendingExistingMembership, /Continue Joining/);
+    assert.match(pendingExistingMembership, /Joining enables Cloud Sync for this device/);
+
+    const joined = joinDashboard('joined');
+    assert.match(joined, /Leaderboard Joined/);
+    assert.match(joined, /Awaiting Your First Eligible Usage/);
+    assert.match(joined, /Review Sync Settings/);
+    assert.doesNotMatch(joined, /#[0-9]|Turn Usage Into Credits|Join Leaderboard|Join &amp; Enable Sync/);
+    assert.doesNotMatch(joinDashboard('joined', true), /Review Sync Settings|Cloud Sync Is Off/);
     assert.match(render(), /aria-label="Expand Cursor Project Usage"[\s\S]*?<\/button><div class="provider-tokens"><strong>420 tokens<\/strong>/);
     snapshot.events = snapshot.events.filter(event => event.provider !== 'cursor');
     assert.match(render(), /aria-label="Expand Cursor Project Usage"[\s\S]*?<\/button><div class="provider-tokens"><strong>0 tokens<\/strong>/);

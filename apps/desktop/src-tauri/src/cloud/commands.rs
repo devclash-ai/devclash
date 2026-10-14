@@ -4,7 +4,7 @@ use serde_json::Value;
 use tauri::{Emitter, Manager};
 
 fn publish(app: &tauri::AppHandle, result: Result<Status, String>) -> Result<Status, String> {
-    match result {
+    let published = match result {
         Ok(status) => {
             app.emit("cloud-updated", &status)
                 .map_err(|_| "Cloud status could not be updated.")?;
@@ -18,7 +18,13 @@ fn publish(app: &tauri::AppHandle, result: Result<Status, String>) -> Result<Sta
             }
             Err(error)
         }
-    }
+    };
+    // Publish the enabled setting first; collecting and syncing history can take time.
+    app.state::<CloudStore>().dispatch_join_sync(|| {
+        let handle = app.clone();
+        tauri::async_runtime::spawn_blocking(move || automatic_sync(&handle));
+    })?;
+    published
 }
 pub fn automatic_sync(app: &tauri::AppHandle) {
     match app.state::<CloudStore>().sync_enabled() {
@@ -167,8 +173,8 @@ pub async fn cloud_logout(app: tauri::AppHandle) -> Result<Status, String> {
         .map_err(|_| "You could not be signed out.")?
 }
 #[tauri::command]
-pub fn cloud_open_page(store: tauri::State<'_, CloudStore>, page: String) -> Result<(), String> {
-    store.open_page(&page)
+pub fn cloud_open_page(store: tauri::State<'_, CloudStore>, page: String, enable_sync_on_join: Option<bool>, join_receipt: Option<String>) -> Result<(), String> {
+    store.open_page(&page, enable_sync_on_join.unwrap_or(false), join_receipt.as_deref())
 }
 
 #[tauri::command]
@@ -184,8 +190,8 @@ pub async fn cloud_set_rank_period(
 }
 
 #[tauri::command]
-pub async fn cloud_start_browser_login(app: tauri::AppHandle) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || app.state::<CloudStore>().start_browser_login())
+pub async fn cloud_start_browser_login(app: tauri::AppHandle, intent: Option<String>, enable_sync_on_join: Option<bool>, join_receipt: Option<String>) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || app.state::<CloudStore>().start_browser_login(intent.as_deref(), enable_sync_on_join.unwrap_or(false), join_receipt.as_deref()))
         .await
         .map_err(|_| "Browser sign-in could not start.")?
 }

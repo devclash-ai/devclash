@@ -10,6 +10,8 @@ import { closeWindow, configureWidget, getAutostart, native, openCustomization, 
 import type { Preferences, Surface, UsageSnapshot } from './lib/types';
 import type { ProviderID } from './lib/types';
 import { retryProviderAuthorization } from './lib/providerAuthorization';
+import { leaderboardJoinState } from './lib/leaderboardJoin';
+import { useLeaderboardJoin } from './components/useLeaderboardJoin';
 import { Dashboard } from './components/Dashboard';
 import { FloatingWidget } from './components/Widget';
 import { Customization } from './components/Customization';
@@ -18,7 +20,7 @@ import { CloudDialog } from './components/CloudDialog';
 import { SourceDialog } from './components/SourceDialog';
 import { UpdatePanel } from './components/UpdatePanel';
 import { cloudPeriod, publicRank } from './lib/rank';
-import { localCloudStatus, readCloud, setRankPeriod } from './lib/cloud';
+import { localCloudStatus, openCloudPage, readCloud, setRankPeriod } from './lib/cloud';
 import type { CloudStatus } from './lib/cloud';
 import { initialUpdateStatus, readUpdateStatus } from './lib/updates';
 import type { UpdateStatus } from './lib/updates';
@@ -38,6 +40,7 @@ export function App() {
   const [surface, setSurface] = useState<Surface>((['dashboard', 'widget', 'menubar'].includes(params.get('surface') ?? '') ? params.get('surface') : 'widget') as Surface);
   const [dialog, setDialog] = useState<'account' | 'rank' | 'sources' | 'updates' | null>(null);
   const [cloud, setCloud] = useState<CloudStatus>(localCloudStatus);
+  const join = useLeaderboardJoin(native, cloud, setCloud, () => setDialog('rank'));
   const [updates, setUpdates] = useState<UpdateStatus>(() => initialUpdateStatus(prefs.autoUpdates));
   const [updateStatusKnown, setUpdateStatusKnown] = useState(!native);
   const [automaticPending, setAutomaticPending] = useState(false);
@@ -198,17 +201,17 @@ export function App() {
       notify(typeof error === 'string' ? error : error instanceof Error ? error.message : 'Provider authorization could not finish. Try again.');
     } finally { authorizing.current = false; setAuthorizationPending(null); }
   };
+  const viewLeaderboard = () => { void openCloudPage('rank').catch(error => notify(typeof error === 'string' ? error : 'The leaderboard could not be opened. Try again.')); };
   const done = () => { if (windowType === 'customize') void closeWindow(); else setCustomizing(false); };
 
   return <>
     {gallery ? <Concepts preferences={prefs} snapshot={snapshot} totals={totals} onChange={changePreferences} onShare={element => void share(element)} onRank={() => setDialog('rank')} onAccount={() => setDialog('account')} onWidget={() => void widget()} /> :
       customizing ? <Customization key={surface} preferences={prefs} snapshot={displayedSnapshot} totals={totals} theme={theme} initialSurface={surface} onChange={changePreferences} onDone={done} onAutostart={enabled => void autostart(enabled)} onWidget={() => void widget()} automaticUpdates={{ enabled: native ? updates.enabled : prefs.autoUpdates, pending: automaticPending || !updateStatusKnown, installMode: updates.installMode, restartRequired: updates.restartRequired }} onAutomaticChange={changeAutomaticUpdates} /> :
       windowType === 'widget' ? <><FloatingWidget preferences={prefs} snapshot={displayedSnapshot} totals={totals} theme={theme} setPeriod={period => changePreferences({ ...prefs, period })} onCustomize={() => void customize('widget')} onShare={element => void share(element)} onRank={() => setDialog('rank')} onHide={() => void hideWidget()} windowDraggable={native} onDragError={() => notify('The widget could not be moved. Try dragging its header again.')} />{sample && <span className="standalone-sample">Sample Data · Design Preview</span>}</> :
-      <Dashboard preferences={prefs} snapshot={displayedSnapshot} totals={totals} theme={theme} period={prefs.period} busy={busy} connected={!!cloud.user} syncEnabled={cloud.syncEnabled} syncTone={cloudSyncTone(cloud)} cloudLabel={cloudSyncLabel(cloud)} accountInitial={cloud.user?.email.charAt(0).toUpperCase()} setPeriod={period => changePreferences({ ...prefs, period })} onCustomize={() => void customize('dashboard')} onRefresh={() => void refresh()} onAccount={() => setDialog('account')} onWidget={() => void widget()} onShare={element => void share(element)} onRank={() => setDialog('rank')} onRetryAuthorization={native ? id => void retryAuthorization(id) : undefined} authorizationPending={authorizationPending} />}
+      <Dashboard updateNotice={native && updates.phase === 'ready' && updates.restartRequired ? <div className="update-ready-notice" role="status" data-no-share="true"><Download size={17} aria-hidden="true" /><span>DevClash {updates.availableVersion} Is Ready</span><button className="text-button" onClick={() => setDialog('updates')}>Review &amp; Restart</button></div> : undefined} joinState={leaderboardJoinState(cloud, !!displayedSnapshot.rank)} joinBusy={join.busy} onJoin={() => void join.start()} onViewLeaderboard={viewLeaderboard} preferences={prefs} snapshot={displayedSnapshot} totals={totals} theme={theme} period={prefs.period} busy={busy} connected={!!cloud.user} syncEnabled={cloud.syncEnabled} syncTone={cloudSyncTone(cloud)} cloudLabel={cloudSyncLabel(cloud)} accountInitial={cloud.user?.email.charAt(0).toUpperCase()} setPeriod={period => changePreferences({ ...prefs, period })} onCustomize={() => void customize('dashboard')} onRefresh={() => void refresh()} onAccount={() => setDialog('account')} onWidget={() => void widget()} onShare={element => void share(element)} onRank={() => setDialog('rank')} onRetryAuthorization={native ? id => void retryAuthorization(id) : undefined} authorizationPending={authorizationPending} />}
     {dialog === 'sources' ? <SourceDialog snapshot={snapshot} onRefresh={() => refresh()} onClose={() => setDialog(null)} /> :
       dialog === 'updates' ? <UpdatePanel status={updates} autoUpdates={prefs.autoUpdates} automaticPending={automaticPending || !updateStatusKnown} onAutomaticChange={changeAutomaticUpdates} onStatus={receiveUpdateStatus} onClose={() => setDialog(null)} /> :
-      dialog && <CloudDialog theme={theme} key={dialog} type={dialog} status={cloud} onChange={setCloud} onView={setDialog} onClose={() => setDialog(null)} />}
-    {native && !gallery && !customizing && windowType === 'main' && updates.phase === 'ready' && updates.restartRequired && dialog !== 'updates' && <div className="update-ready-notice" role="status" style={toast ? { bottom: 78 } : undefined}><Download size={17} /><span>DevClash {updates.availableVersion} Is Ready</span><button className="text-button" onClick={() => setDialog('updates')}>Review & Restart</button></div>}
+      dialog && <CloudDialog theme={theme} key={dialog} type={dialog} status={cloud} join={join} onChange={setCloud} onView={setDialog} onClose={() => setDialog(null)} />}
     {toast && <div className="toast" role="status">{toast}<button className="icon-button" aria-label="Dismiss Notification" onClick={() => setToast('')}><X size={16} /></button></div>}
   </>;
 }

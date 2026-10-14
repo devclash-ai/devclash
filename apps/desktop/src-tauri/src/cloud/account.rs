@@ -58,8 +58,15 @@ impl CloudStore {
             *preferences = Preferences {
                 origin: self.api()?.origin.clone(),
                 user_id: credential.user.id.clone(),
+                join_pending: preferences.join_pending,
+                enable_sync_on_join: preferences.enable_sync_on_join,
+                join_receipt: preferences.join_receipt.clone(),
+                join_account_id: preferences.join_account_id.clone(),
                 ..Preferences::default()
             };
+        }
+        if preferences.join_pending && preferences.join_account_id.is_none() {
+            preferences.join_account_id = Some(credential.user.id.clone());
         }
         preferences.session_revoked = false;
         preferences.credential_origin = None;
@@ -79,6 +86,10 @@ impl CloudStore {
             .lock()
             .map_err(|_| "Cloud preferences unavailable.")?;
         preferences.sync_enabled = enabled;
+        if !enabled {
+            preferences.enable_sync_on_join = false;
+            preferences.join_sync_activation_ready = false;
+        }
         preferences.user_id = credential.user.id;
         preferences.origin = self.api()?.origin.clone();
         self.save(&preferences)?;
@@ -116,10 +127,50 @@ impl CloudStore {
         }
         self.status()
     }
-    pub fn open_page(&self, page: &str) -> Result<(), String> {
+    pub(super) fn mark_join_pending(&self, enable_sync: bool, receipt: Option<&str>, account_id: Option<&str>) -> Result<(), String> {
+        if receipt.is_some_and(|value| !super::browser_login::valid_flow_id(value)) || (enable_sync && receipt.is_none()) {
+            return Err("Invalid leaderboard join receipt. Start joining again.".into());
+        }
+        let mut preferences = self
+            .preferences
+            .lock()
+            .map_err(|_| "Cloud preferences unavailable.")?;
+        preferences.origin = self.api()?.origin.clone();
+        preferences.join_pending = true;
+        preferences.enable_sync_on_join = enable_sync;
+        preferences.join_receipt = receipt.map(str::to_owned);
+        preferences.join_account_id = account_id.map(str::to_owned);
+        preferences.join_sync_activation_ready = false;
+        self.save(&preferences)?;
+        self.status
+            .lock()
+            .map_err(|_| "Cloud status unavailable.")?
+            .join_pending = true;
+        Ok(())
+    }
+    pub(super) fn dispatch_join_sync(&self, start: impl FnOnce()) -> Result<(), String> {
+        let mut preferences = self.preferences.lock().map_err(|_| "Cloud preferences unavailable.")?;
+        if !preferences.join_sync_activation_ready || !preferences.sync_enabled || preferences.session_revoked {
+            return Ok(());
+        }
+        preferences.join_sync_activation_ready = false;
+        self.save(&preferences)?;
+        drop(preferences);
+        start();
+        Ok(())
+    }
+    pub fn open_page(&self, page: &str, enable_sync: bool, receipt: Option<&str>) -> Result<(), String> {
         self.api()?;
         let origin = self.app_origin.as_ref().map_err(Clone::clone)?;
-        let url = super::origins::page_url(origin, page, self.status()?.rank_period)?;
+        let url = if page == "join-rank" {
+            let credential = self.credential()?;
+            let url = super::origins::join_url(origin, &credential.user.id, enable_sync, receipt)?;
+            self.mark_join_pending(enable_sync, receipt, Some(&credential.user.id))?;
+            url
+        } else {
+            if enable_sync || receipt.is_some() { return Err("Sync consent is only available when joining the leaderboard.".into()); }
+            super::origins::page_url(origin, page, self.status()?.rank_period)?
+        };
         open::that(url).map_err(|_| "The DevClash page could not be opened in your browser.".into())
     }
 }

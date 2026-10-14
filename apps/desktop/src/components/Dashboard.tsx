@@ -1,5 +1,7 @@
+import { LeaderboardInvitation } from './LeaderboardInvitation';
+import type { JoinState } from '../lib/leaderboardJoin';
 import { Cloud, Monitor, Settings, Share2, Trophy, ChevronDown, ChevronRight, Triangle } from 'lucide-react';
-import { useId, useRef, useState } from 'react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 import type { Period, Preferences, ProjectTotal, ProviderID, UsageSnapshot, UsageTotals } from '../lib/types';
 import { enabledInOrder, providerNames } from '../lib/preferences';
 import { formatCost, formatSpend, formatTokens } from '../lib/usage';
@@ -8,11 +10,13 @@ import { providerProjects } from '../lib/projectUsage';
 import { ProviderProjects } from './ProjectUsage';
 import { EmptyState, Logo, PeriodControl, ProviderIcon, RefreshButton, Sparkline, WindowChrome } from './Common';
 interface Props {
+  updateNotice?: ReactNode;
   preferences: Preferences; snapshot: UsageSnapshot; totals: UsageTotals; period: Period;
   theme: 'light' | 'dark'; connected?: boolean; busy?: boolean; setPeriod: (p: Period) => void;
   syncEnabled?: boolean; syncTone?: 'off' | 'pending' | 'error' | 'active'; cloudLabel?: string; accountInitial?: string;
   onCustomize: () => void; onRefresh: () => void; onAccount: () => void; onWidget: () => void;
   onShare: (element: HTMLElement) => void; onRank: () => void;
+  joinState?: JoinState; joinBusy?: boolean; onJoin?: () => void; onViewLeaderboard?: () => void;
   onRetryAuthorization?: (id: ProviderID) => void; authorizationPending?: ProviderID | null;
 }
 export function ModelRows({ totals, compact = false, spend = false }: { totals: UsageTotals; compact?: boolean; spend?: boolean }) {
@@ -40,6 +44,7 @@ export function Dashboard(props: Props) {
         </div>}{metrics.trend && <Sparkline trend={totals.trend} labels />}
       </div>}
       {!totals.hasData && <EmptyState browser={snapshot.source === 'browser'} reading={snapshot.source === 'local' && !snapshot.fetchedAt} />}
+      {props.joinState && props.joinState !== 'ranked' && <LeaderboardInvitation state={props.joinState} syncEnabled={!!props.syncEnabled} busy={props.joinBusy} unavailable={snapshot.rankUnavailable} onJoin={props.onJoin ?? onRank} onView={props.onViewLeaderboard ?? onRank} onSettings={onAccount} />}
       {metrics.rank && connected && snapshot.rank && <button className="rank-strip" onClick={onRank}><Trophy size={33} className="trophy" /><span><span className="rank-label">Rank Battle</span><strong>#{snapshot.rank.position} {snapshot.rank.period.charAt(0).toUpperCase() + snapshot.rank.period.slice(1)} · UTC</strong></span>
         {typeof snapshot.rank.movement === 'number' && snapshot.rank.movement !== 0 && <span className="rank-movement positive"><Triangle size={14} fill="currentColor" />Up {snapshot.rank.movement} Places</span>}<span className="button rank-link">View Leaderboard<ChevronRight size={16} /></span></button>}
       {providers.length > 0 && <section className={'providers-section' + (!metrics.limits ? ' no-limits' : '')}><div className="section-head"><h2>Providers</h2><span>{period === 'today' ? "Today's Tokens" : 'Tokens'}</span>{metrics.limits && <span>Quota Usage</span>}</div>
@@ -50,10 +55,11 @@ export function Dashboard(props: Props) {
       {snapshot.errors.length > 0 && <div className="source-notice" role="status">{snapshot.errors[0]}</div>}
       {metrics.spend && totals.unpricedModels.length > 0 && <div className="source-notice" role="status">Price Unavailable: {totals.unpricedModels.join(', ')}. Their tokens are included; their cost is excluded.</div>}
     </div>
-    {connected && props.syncEnabled === false && <aside className="sync-invitation" data-no-share="true" aria-label="Enable Cloud Sync">
+    {connected && props.syncEnabled === false && props.joinState !== 'joined' && <aside className="sync-invitation" data-no-share="true" aria-label="Enable Cloud Sync">
       <Cloud size={22} aria-hidden="true" /><div><strong>Turn Usage Into Credits</strong><p>Sync privately, then convert eligible tokens into Build Credits in your dashboard.</p></div>
       <button className="button primary" onClick={onAccount}>Enable Cloud Sync<ChevronRight size={15} /></button>
     </aside>}
+    {props.updateNotice}
     <footer className="dashboard-footer"><div className="local-status"><button className="icon-button" aria-label="Open Floating Widget" onClick={onWidget}><Monitor size={24} /></button><button className={"sync-status-button sync-tone-" + (connected ? props.syncTone ?? 'pending' : 'off')} onClick={onAccount} aria-label={connected ? `Manage Cloud Sync: ${props.cloudLabel ?? 'Cloud Sync'}` : 'Sign In to Enable Cloud Sync'}><i className="status-dot" /><span>{connected ? <><Cloud size={17} />{props.cloudLabel ?? 'Cloud Sync'}</> : 'Local Only'}</span></button></div>
       <div className="footer-actions" data-no-share="true">{connected ? <button className="avatar" aria-label="Open Account" onClick={onAccount}>{props.accountInitial ?? 'A'}</button> : <button className="button account-button" onClick={onAccount}>Sign In to Save History</button>}
         <span className="footer-divider" /><button className="button share-button" disabled={!totals.hasData} onClick={() => ref.current && onShare(ref.current)}><Share2 size={20} />Share</button></div>

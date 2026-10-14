@@ -67,3 +67,18 @@
 .row-cost { display: block; font-size: 12px; font-weight: 400; margin-top: 3px; }
 .summary-value > .spend-note { font-size: 11px !important; max-width: 220px; line-height: 1.4; }
 @media (max-width: 580px) { .dashboard-header { padding: 10px 20px 20px; } .dashboard-content { padding-left: 20px; padding-right: 20px; } .summary-value { min-width: 130px; } .total-tokens { font-size: 41px; } .usage-summary { gap: 15px; } .sparkline-labels span:nth-child(even) { display: none; } .provider-row { padding: 14px 13px; gap: 10px; grid-template-columns: 1fr 1fr; } .provider-name { font-size: 15px; gap: 10px; } .quota { grid-column: 1/-1; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 10px; } .quota .meter { margin: 0; } .reset-label { grid-column: 1/-1; } .model-row { grid-template-columns: 1fr 1fr 60px 29px; font-size: 12px; gap: 7px; } .rank-strip { gap: 10px; } .rank-strip .rank-movement { display: none; } .dashboard-footer { padding-left: 18px; padding-right: 18px; } .footer-actions { gap: 9px; } .account-button { font-size: 11px; } }
+.leaderboard-invitation { margin: 0 0 11px; }
+.leaderboard-strip { display: flex; align-items: center; gap: 14px; padding: 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--panel); min-height: 70px; }
+.leaderboard-off { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 5%, var(--panel)); }
+.leaderboard-icon { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 8px; flex-shrink: 0; }
+.leaderboard-icon .trophy { color: #fbc651; fill: #e2a737; }
+.leaderboard-copy { flex: 1; min-width: 0; }
+.leaderboard-copy strong { display: block; font-size: 14px; font-weight: 600; }
+.leaderboard-copy p, .leaderboard-copy small { color: var(--muted); font-size: 12px; line-height: 1.45; margin-top: 3px; }
+.leaderboard-copy small { display: block; font-size: 11px; }
+.leaderboard-strip .button { font-size: 12px; padding: 10px 12px; white-space: nowrap; flex-shrink: 0; }
+.leaderboard-joined { border-color: #2c9e68; background: color-mix(in srgb, #2c9e68 7%, var(--panel)); }
+.leaderboard-joined .leaderboard-icon { color: #3ba96f; border: 0; }
+.leaderboard-sync { margin-top: 7px; min-height: 58px; padding-top: 9px; padding-bottom: 9px; }
+.leaderboard-sync .leaderboard-icon { width: 36px; height: 36px; }
+@media (max-width: 480px) { .leaderboard-strip { flex-wrap: wrap; gap: 10px; } .leaderboard-strip .button { margin-left: 54px; } .leaderboard-sync .button { margin-left: 46px; } }

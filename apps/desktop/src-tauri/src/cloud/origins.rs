@@ -27,9 +27,36 @@ pub fn page_url(origin: &str, page: &str, period: Period) -> Result<String, Stri
     Ok(format!("{origin}{path}"))
 }
 
+pub fn join_url(origin: &str, account: &str, enable_sync: bool, receipt: Option<&str>) -> Result<String, String> {
+    let mut url = reqwest::Url::parse(origin).map_err(|_| "The browser app address is invalid.")?;
+    url.set_path("/rank");
+    url.query_pairs_mut().append_pair("join", "1").append_pair("from", "desktop").append_pair("account", account);
+    add_join_receipt(&mut url, enable_sync, receipt)?;
+    Ok(url.into())
+}
+
+pub(super) fn add_join_receipt(url: &mut reqwest::Url, enable_sync: bool, receipt: Option<&str>) -> Result<(), String> {
+    if let Some(receipt) = receipt {
+        if !super::browser_login::valid_flow_id(receipt) { return Err("Invalid leaderboard join receipt.".into()); }
+        url.query_pairs_mut().append_pair("receipt", receipt);
+    } else if enable_sync { return Err("A leaderboard join receipt is required for sync consent.".into()); }
+    if enable_sync { url.query_pairs_mut().append_pair("sync", "enable"); }
+    Ok(())
+}
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn joining_binds_the_browser_to_the_native_account_without_url_injection() {
+        let url = join_url(PRODUCTION_APP_ORIGIN, "account&token=secret#fragment", false, None).unwrap();
+        let parsed = reqwest::Url::parse(&url).unwrap();
+        assert_eq!(parsed.path(), "/rank");
+        assert_eq!(parsed.fragment(), None);
+        assert_eq!(parsed.query_pairs().collect::<Vec<_>>(), vec![
+            ("join".into(), "1".into()), ("from".into(), "desktop".into()),
+            ("account".into(), "account&token=secret#fragment".into()),
+        ]);
+    }
     #[test]
     fn production_pages_use_app_host_for_all_periods_and_both_api_hosts() {
         for api in [PRODUCTION_API_ORIGIN, LEGACY_API_ORIGIN] {

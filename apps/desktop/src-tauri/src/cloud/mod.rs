@@ -12,6 +12,8 @@ mod sync;
 mod origin_migration_tests;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod join_tests;
 
 use api::{Api, ApiError};
 use chrono::{DateTime, Utc};
@@ -58,11 +60,41 @@ struct Preferences {
     rank_period: Period,
     session_revoked: bool,
     ranked: bool,
+    join_pending: bool,
+    enable_sync_on_join: bool,
+    join_receipt: Option<String>,
+    join_account_id: Option<String>,
+    join_sync_activation_ready: bool,
     public_profile: bool,
     cached_projects: Vec<OwnedProject>,
     project_sessions: Vec<ProjectSession>,
     project_warning: Option<String>,
 }
+fn confirm_join(preferences: &mut Preferences, state: &Value, account_id: &str) {
+    if state["ranked"].as_bool() != Some(true) {
+        return;
+    }
+    if preferences.join_pending && preferences.enable_sync_on_join {
+        // Existing membership can predate this consent. Keep the pending flow
+        // until its account and receipt are confirmed; another join cannot consume it.
+        let matches = preferences.user_id == account_id
+            && preferences.join_account_id.as_deref() == Some(account_id)
+            && preferences.join_receipt.as_deref().is_some_and(|receipt| {
+                state["desktopJoinReceipt"].as_str() == Some(receipt)
+                    || state["desktopJoinReceipts"].as_array().is_some_and(|receipts| {
+                        receipts.iter().any(|value| value.as_str() == Some(receipt))
+                    })
+            });
+        if !matches {
+            return;
+        }
+        preferences.sync_enabled = true;
+        preferences.join_sync_activation_ready = true;
+    }
+    preferences.join_pending = false;
+    preferences.enable_sync_on_join = false;
+}
+
 // Older versions could queue manually imported Cursor files. Preserve other
 // providers and verified account snapshots while removing that obsolete path.
 fn allowed_record(record: &records::CloudRecord) -> bool {
@@ -94,6 +126,7 @@ pub struct Status {
     pub last_synced_at: Option<String>,
     pub sync_error: Option<String>,
     pub ranked: bool,
+    pub join_pending: bool,
     pub public_profile: bool,
     pub rank: Option<u64>,
     pub badges: u64,
@@ -185,6 +218,7 @@ impl CloudStore {
             retry_attempts: preferences.retry_attempts,
             next_retry_at: preferences.next_retry_at.clone(),
             rank_period: preferences.rank_period,
+            join_pending: preferences.join_pending,
             sync_error: load_error,
             ..Status::default()
         };
@@ -266,6 +300,7 @@ impl CloudStore {
             status.next_retry_at = preferences.next_retry_at.clone();
             status.retry_attempts = preferences.retry_attempts;
             status.ranked = preferences.ranked;
+            status.join_pending = preferences.join_pending;
             status.public_profile = preferences.public_profile;
             status.projects = preferences.cached_projects.clone();
             status.active_project_id =
@@ -282,6 +317,7 @@ impl CloudStore {
         preferences.ranked = state["ranked"]
             .as_bool()
             .unwrap_or_else(|| state["rankJoinedAt"].is_string());
+        confirm_join(&mut preferences, &state, &credential.user.id);
         preferences.public_profile = state["publicProfile"].as_bool().unwrap_or(false);
         self.save(&preferences)?;
         let mut status = self
@@ -293,6 +329,7 @@ impl CloudStore {
         status.sync_enabled = preferences.sync_enabled && preferences.user_id == credential.user.id;
         status.last_synced_at = preferences.last_synced_at.clone();
         status.ranked = preferences.ranked;
+        status.join_pending = preferences.join_pending;
         status.rank_period = preferences.rank_period;
         status.rank = None;
         status.rank_tokens = None;
@@ -360,6 +397,8 @@ impl CloudStore {
             .lock()
             .map_err(|_| "Cloud preferences unavailable.")?;
         preferences.sync_enabled = false;
+        preferences.enable_sync_on_join = false;
+        preferences.join_sync_activation_ready = false;
         preferences.session_revoked = true;
         preferences.credential_origin = None;
         preferences.ranked = false;

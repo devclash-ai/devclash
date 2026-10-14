@@ -6,14 +6,14 @@ import { ExternalLink, RefreshCw, Trophy, X } from 'lucide-react';
 import { useState } from 'react';
 import { native } from '../lib/desktop';
 import { dismissProjectWarning, openCloudPage, refreshCloudProjects, setActiveCloudProject, setCloudSync, setParticipation, signOutCloud, syncCloud } from '../lib/cloud';
+import type { useLeaderboardJoin } from './useLeaderboardJoin';
 import type { CloudStatus } from '../lib/cloud';
 
-export function CloudDialog({ theme = 'light', type, status, onChange, onView, onClose }: {
-  theme?: 'light' | 'dark'; type: 'account' | 'rank'; status: CloudStatus; onChange: (status: CloudStatus) => void; onView: (type: 'account' | 'rank' | 'sources' | 'updates') => void; onClose: () => void;
+export function CloudDialog({ theme = 'light', type, status, join, onChange, onView, onClose }: {
+  theme?: 'light' | 'dark'; type: 'account' | 'rank'; status: CloudStatus; join: ReturnType<typeof useLeaderboardJoin>; onChange: (status: CloudStatus) => void; onView: (type: 'account' | 'rank' | 'sources' | 'updates') => void; onClose: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [syncSaving, setSyncSaving] = useState(false); const [error, setError] = useState('');
-  const [consent, setConsent] = useState(false);
   const [projectChoice, setProjectChoice] = useState(status.activeProjectId ?? '');
   const run = async (action: () => Promise<void>) => {
     setBusy(true); setError('');
@@ -33,21 +33,26 @@ export function CloudDialog({ theme = 'light', type, status, onChange, onView, o
   return <div className="dialog-backdrop" onClick={onClose}><section className={'cloud-dialog cloud-account-dialog theme-' + theme} role="dialog" aria-modal="true" aria-labelledby="cloud-dialog-title" onClick={event => event.stopPropagation()}>
     <button className="icon-button dialog-close" aria-label="Close Dialog" onClick={onClose}><X size={22} /></button>
     {type === 'rank' && <div className="dialog-icon"><Trophy size={32} /></div>}
-    <h1 id="cloud-dialog-title">{type === 'rank' ? 'Rank Battle' : status.user ? 'Your Account' : 'Your Usage, Yours to Keep'}</h1>
+    <h1 id="cloud-dialog-title">{type === 'rank' ? 'Leaderboard' : status.user ? 'Your Account' : 'Your Usage, Yours to Keep'}</h1>
     {!native || !status.configured ? <>
       <p>{!native ? 'The browser gallery previews the desktop design. Sign in and upload real usage from the installed DevClash app.' : 'DevClash works without an account. This build has no cloud address configured; local tracking and your saved display preferences remain available.'}</p>
       <div className="cloud-status"><i className="status-dot" />Local Tracking Is Active</div>
       <button className="button primary" onClick={onClose}>Got It</button>
     </> : type === 'rank' ? <>
-      <p>Compare measured tokens by UTC day, week, month, and model. Participation is optional; uploaded history stays private until you choose to join.</p>
-      <div className="cloud-status"><i className="status-dot" />{status.ranked ? status.rank ? `#${status.rank} ${status.rankPeriod} · UTC` : 'Rank Battle Is Enabled' : 'Public Ranking Is Off'}</div>
-      {status.user && !status.ranked && <>
-        <label className="cloud-option"><input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} /><span><strong>Join Public Rankings</strong><small>Show my ranking identity and measured token usage. Public profile visibility is controlled separately. Earlier private history does not count toward new rankings.</small></span></label>
-        <button className="button primary" disabled={!consent || busy} onClick={() => void run(() => update(() => setParticipation(true, status.publicProfile)))}>Join Rank Battle</button>
+      <p>Compare measured tokens by UTC day, week, month, and model. Participation is optional. Only new eligible usage counts; earlier private history stays private.</p>
+      <div className="cloud-status"><i className="status-dot" />{status.joinPending ? 'Waiting for Join Confirmation' : status.ranked ? status.rank ? `#${status.rank} ${status.rankPeriod} · UTC` : 'Leaderboard Is Enabled' : 'Public Ranking Is Off'}</div>
+      {(!status.ranked || status.joinPending) && <>
+        <p className="cloud-note">Choose your public name and confirm participation on the website. Your public profile stays separate. {status.syncEnabled ? 'Cloud Sync is already enabled.' : 'Joining enables Cloud Sync for this device. New eligible usage needs sync.'}</p>
+        {join.request ? <>
+          <div className="cloud-status" role="status">Waiting for Browser Connection</div>
+          <p>Enter this connection code on the DevClash page:</p>
+          <p className="desktop-connection-code">{join.request.displayCode}</p>
+          <p className="cloud-note">Only approve a request you started. This code expires in ten minutes. Your join request stays available if you close this dialog.</p>
+        </> : <button className="button primary" disabled={busy || join.busy} onClick={() => void join.start()}>{join.busy ? 'Opening Browser…' : status.joinPending ? 'Continue Joining' : status.syncEnabled ? 'Join Leaderboard' : 'Join & Enable Sync'}<ExternalLink size={15} /></button>}
+        {join.error && <p className="cloud-error" role="alert">{join.error}</p>}
       </>}
       {status.ranked && <button className="button" disabled={busy} onClick={() => void run(() => update(() => setParticipation(false, status.publicProfile)))}>Leave Public Rankings</button>}
-      {!status.user && <><p className="muted">Sign in to join. You can browse the public leaderboard now.</p><button className="button" disabled={busy} onClick={() => onView('account')}>Sign In</button></>}
-      {status.user && !status.syncEnabled && <p className="cloud-note">Enable Cloud Sync in your account to upload measured usage. Joining alone does not upload local records.</p>}
+      {status.user && !status.syncEnabled && <p className="cloud-note">{status.ranked && !status.joinPending ? 'Enable Cloud Sync in your account to send new eligible usage.' : 'Cloud Sync sends measured usage metadata only. It starts after your join is confirmed; prompts, replies and provider credentials stay on this device.'}</p>}
       <button className="button cloud-link" disabled={busy} onClick={() => void run(() => openCloudPage('rank'))}>Open Leaderboard<ExternalLink size={15} /></button>
     </> : status.user ? <>
       <p className="cloud-email">{status.user.email}</p>
@@ -77,7 +82,7 @@ export function CloudDialog({ theme = 'light', type, status, onChange, onView, o
         <button className="button" disabled={busy} onClick={() => void run(() => openCloudPage('profile'))}>Manage Profile<ExternalLink size={15} /></button>
         <button className="button" disabled={busy} onClick={() => onView('rank')}><Trophy size={16} />Rank Battle</button></div>
       <p className="cloud-note">{status.ranked ? 'Public rankings are enabled.' : 'Your history is private. Join Rank Battle separately.'}</p>
-      <button className="text-button cloud-signout" disabled={busy} onClick={() => void run(async () => { await update(signOutCloud); setConsent(false); })}>Sign Out of This Device</button>
+      <button className="text-button cloud-signout" disabled={busy} onClick={() => void run(async () => { await update(signOutCloud); })}>Sign Out of This Device</button>
     </> : <>
       <BrowserSignIn onChange={onChange}/>
     </>}

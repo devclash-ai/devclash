@@ -134,6 +134,7 @@ svg { flex-shrink: 0; }
 .update-release-notes .update-notes { margin-top: 10px; font-size: 12px; }
 .update-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .update-dialog .update-actions .primary { margin-top: 0; }
-.update-ready-notice { position: fixed; bottom: 20px; right: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: calc(100% - 48px); padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); box-shadow: 0 6px 24px #15203318; z-index: 20; font-size: 12px; }
+.update-ready-notice { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 22px; border-top: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 12px; }
 .update-ready-notice > svg { color: var(--blue); }
-.update-ready-notice .text-button { font-size: 12px; }
+.update-ready-notice > span { flex: 1 1 180px; overflow-wrap: anywhere; }
+.update-ready-notice .text-button { flex-shrink: 0; font-size: 12px; }

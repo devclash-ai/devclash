@@ -1,6 +1,6 @@
 [package]
 name = "devclash-desktop"
-version = "0.1.0-beta.5"
+version = "0.1.0-beta.6"
 edition = "2021"
 description = "DevClash desktop usage tracker"
 license = "MIT"
@@ -48,6 +48,10 @@ zeroize = "1.9"
 # Open only the configured HTTPS profile/rank pages using the platform browser.
 open = "5"
 
+[target.'cfg(unix)'.dependencies]
+# Already present transitively; use O_NOFOLLOW for private local cache files.
+libc = "0.2"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 # Already locked through keyring; query existing credentials without background permission prompts.
 core-foundation = "0.10"
@@ -58,3 +62,7 @@ security-framework-sys = "2.17"
 winreg = "0.55"
 # Read the current user's existing Claude Desktop encryption key through Windows DPAPI.
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }
+
+# GTK 0.18 requires this ABI; backport the upstream iterator soundness fix.
+[patch.crates-io]
+glib = { path = "vendor/glib" }

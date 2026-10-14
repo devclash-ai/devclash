@@ -7,6 +7,7 @@ pub struct ApiError {
     pub message: String,
     pub code: Option<String>,
     pub project_id: Option<String>,
+    pub retry_after_seconds: Option<u64>,
 }
 impl From<String> for ApiError {
     fn from(message: String) -> Self {
@@ -15,6 +16,7 @@ impl From<String> for ApiError {
             message,
             code: None,
             project_id: None,
+            retry_after_seconds: None,
         }
     }
 }
@@ -65,14 +67,32 @@ impl Api {
                 message: "Could not reach DevClash. Check your connection and try again.".into(),
                 code: None,
                 project_id: None,
+                retry_after_seconds: None,
             }
         })?;
         let status = response.status();
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| {
+                value.parse::<u64>().ok().or_else(|| {
+                    chrono::DateTime::parse_from_rfc2822(value)
+                        .ok()
+                        .map(|date| {
+                            (date.with_timezone(&chrono::Utc) - chrono::Utc::now())
+                                .num_seconds()
+                                .max(0) as u64
+                        })
+                })
+            })
+            .map(|seconds| seconds.min(86400));
         let value = response.json::<Value>().map_err(|_| ApiError {
             status: status.as_u16(),
             message: "DevClash returned an unreadable response. Please try again.".into(),
             code: None,
             project_id: None,
+            retry_after_seconds: retry_after,
         })?;
         if !status.is_success() {
             eprintln!("Cloud request failed with HTTP {}", status.as_u16());
@@ -80,6 +100,8 @@ impl Api {
                 status: status.as_u16(),
                 code: value["code"].as_str().map(str::to_owned),
                 project_id: value["projectId"].as_str().map(str::to_owned),
+                retry_after_seconds: retry_after
+                    .or_else(|| value["retryAfterSeconds"].as_u64().map(|n| n.min(86400))),
                 message: value["error"]["message"]
                     .as_str()
                     .or_else(|| value["error"].as_str())

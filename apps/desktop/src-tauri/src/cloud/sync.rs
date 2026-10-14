@@ -4,14 +4,17 @@ use super::{projects, ApiError, CloudStore, Period, Preferences, Status};
 use chrono::{DateTime, Utc};
 use serde_json::json;
 use std::collections::BTreeMap;
-use std::time::{Duration, Instant};
+use std::hash::BuildHasher;
+use std::time::{Duration, Instant, SystemTime};
 
 const BATCH_SIZE: usize = 900;
 const CHECKPOINT_BATCHES: usize = 10;
 const CHECKPOINT_INTERVAL: Duration = Duration::from_secs(15);
 
 fn acknowledge_batch(preferences: &mut Preferences, batch: &[CloudRecord]) {
-    preferences.acknowledged.extend(batch.iter().map(CloudRecord::acknowledgement));
+    preferences
+        .acknowledged
+        .extend(batch.iter().map(CloudRecord::acknowledgement));
     // The syncing lock owns this queue for the cycle; the sent batch is its prefix.
     // Avoid rehashing every remaining record and cloning all historical acknowledgements.
     preferences.pending.drain(..batch.len());
@@ -56,6 +59,16 @@ fn retry_delay(attempts: u32) -> i64 {
         .saturating_mul(1i64 << attempts.saturating_sub(1).min(7))
         .min(3600)
 }
+pub(crate) fn jitter_seconds(max: u64) -> u64 {
+    std::collections::hash_map::RandomState::new().hash_one(SystemTime::now()) % (max + 1)
+}
+fn retry_wait(attempts: u32, server: Option<u64>, jitter: u64) -> i64 {
+    let base = retry_delay(attempts) as u64;
+    (base
+        .saturating_add(jitter.min(base / 2))
+        .min(5400)
+        .max(server.unwrap_or(0).min(86400))) as i64
+}
 impl CloudStore {
     pub fn sync(&self, records: Vec<CloudRecord>) -> Result<Status, String> {
         self.sync_queue(records, true, &|_| {})
@@ -63,10 +76,19 @@ impl CloudStore {
     pub fn sync_automatic(&self, records: Vec<CloudRecord>) -> Result<Status, String> {
         self.sync_queue(records, false, &|_| {})
     }
-    pub fn sync_automatic_with_progress(&self, records: Vec<CloudRecord>, progress: impl Fn(Status)) -> Result<Status, String> {
+    pub fn sync_automatic_with_progress(
+        &self,
+        records: Vec<CloudRecord>,
+        progress: impl Fn(Status),
+    ) -> Result<Status, String> {
         self.sync_queue(records, false, &progress)
     }
-    fn sync_queue(&self, mut records: Vec<CloudRecord>, force: bool, progress: &dyn Fn(Status)) -> Result<Status, String> {
+    fn sync_queue(
+        &self,
+        mut records: Vec<CloudRecord>,
+        force: bool,
+        progress: &dyn Fn(Status),
+    ) -> Result<Status, String> {
         let Ok(_guard) = self.syncing.try_lock() else {
             return self.status();
         };
@@ -114,12 +136,19 @@ impl CloudStore {
             if batch.is_empty() {
                 break;
             }
+            let pending_records = self
+                .preferences
+                .lock()
+                .map_err(|_| "Cloud preferences unavailable.")?
+                .pending
+                .len();
+            let mut retry_after = None;
             let response = self.api().map_err(ApiError::from).and_then(|api| {
                 api.request(
                     "POST",
                     "/api/usage/sync",
                     Some(&credential.token),
-                    Some(&json!({"records":batch})),
+                    Some(&json!({"records":batch,"pendingRecords":pending_records})),
                 )
             });
             let result = match response {
@@ -133,6 +162,7 @@ impl CloudStore {
                     }
                 }
                 Err(error) => {
+                    retry_after = error.retry_after_seconds;
                     if error.status == 409
                         && error.code.as_deref() == Some("USAGE_PROJECT_UNAVAILABLE")
                         && error.project_id.as_deref().is_some_and(|id| {
@@ -161,7 +191,11 @@ impl CloudStore {
                     preferences.retry_attempts = preferences.retry_attempts.saturating_add(1);
                     preferences.next_retry_at = Some(
                         (Utc::now()
-                            + chrono::Duration::seconds(retry_delay(preferences.retry_attempts)))
+                            + chrono::Duration::seconds(retry_wait(
+                                preferences.retry_attempts,
+                                retry_after,
+                                jitter_seconds((retry_delay(preferences.retry_attempts) / 2) as u64),
+                            )))
                         .to_rfc3339(),
                     );
                     self.save(&preferences)?;
@@ -189,7 +223,10 @@ impl CloudStore {
             }
             self.queue_status(&preferences)?;
             drop(preferences);
-            self.status.lock().map_err(|_| "Cloud status unavailable.")?.sync_error = None;
+            self.status
+                .lock()
+                .map_err(|_| "Cloud status unavailable.")?
+                .sync_error = None;
             progress(self.status()?);
         }
         let mut preferences = self
@@ -441,4 +478,19 @@ mod tests {
         std::fs::remove_dir_all(root).unwrap();
     }
 
+}
+
+#[cfg(test)]
+mod retry_pressure_tests {
+    use super::*;
+    #[test]
+    fn backoff_honors_server_and_staggers_without_unbounded_delays() {
+        assert_eq!(retry_wait(1, Some(120), 5), 120);
+        assert_eq!(retry_wait(1, None, 15), 45);
+        assert_eq!(retry_wait(100, None, u64::MAX), 5400);
+        assert_eq!(retry_wait(1, Some(u64::MAX), 0), 86400);
+        for _ in 0..100 {
+            assert!(jitter_seconds(30) <= 30);
+        }
+    }
 }

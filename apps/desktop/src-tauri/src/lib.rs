@@ -254,6 +254,7 @@ pub fn run() {
                 .or_else(|| std::env::var_os("USAGERANK_DATA_DIR"))
                 .map(std::path::PathBuf::from)
                 .unwrap_or(app.path().app_local_data_dir()?);
+            storage::private_directory(&data_directory).map_err(std::io::Error::other)?;
             migration::initialize(&data_directory).map_err(std::io::Error::other)?;
             std::env::set_var(
                 "DEVCLASH_SOURCE_SETTINGS",
@@ -283,11 +284,11 @@ pub fn run() {
                     }
                     Err(error) => eprintln!("Usage refresh failed: {error}"),
                 }
-                std::thread::sleep(std::time::Duration::from_secs(300));
+                std::thread::sleep(std::time::Duration::from_secs(300 + cloud::jitter_seconds(60)));
             });
             let retry_handle = app.handle().clone();
             std::thread::spawn(move || loop {
-                std::thread::sleep(std::time::Duration::from_secs(30));
+                std::thread::sleep(std::time::Duration::from_secs(30 + cloud::jitter_seconds(15)));
                 cloud::commands::automatic_sync(&retry_handle);
             });
             Ok(())

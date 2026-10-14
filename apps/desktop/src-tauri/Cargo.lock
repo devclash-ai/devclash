@@ -985,7 +985,7 @@ dependencies = [
 
 [[package]]
 name = "devclash-desktop"
-version = "0.1.0-beta.5"
+version = "0.1.0-beta.6"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -997,6 +997,7 @@ dependencies = [
  "dirs 6.0.0",
  "fancy-regex",
  "keyring",
+ "libc",
  "open",
  "pbkdf2",
  "reqwest",
@@ -1746,8 +1747,6 @@ dependencies = [
 [[package]]
 name = "glib"
 version = "0.18.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "233daaf6e83ae6a12a52055f568f9d7cf4671dabb78ff9560ab6da230ce00ee5"
 dependencies = [
  "bitflags 2.13.2",
  "futures-channel",

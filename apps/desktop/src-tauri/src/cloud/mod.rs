@@ -421,3 +421,5 @@ impl CloudStore {
 
 #[cfg(test)]
 mod sync_checkpoint_tests;
+
+pub(crate) use sync::jitter_seconds;

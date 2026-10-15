@@ -59,15 +59,12 @@ pub struct CachedFile {
 
 fn roots() -> (Vec<(&'static str, PathBuf)>, Vec<String>) {
     let mut result = Vec::new();
-    let configs = crate::paths::configured("claude");
+    let (configs, claude_auto) = crate::paths::configured_with_discovery("claude");
+    let (codex_configs, codex_auto) = crate::paths::configured_with_discovery("codex");
     #[cfg(target_os = "macos")]
     let (configs, errors) = {
         let home = dirs::home_dir().unwrap_or_default();
-        super::claude_roots::discover(
-            &home,
-            &configs,
-            configs == crate::paths::defaults("claude", &home, "macos"),
-        )
+        super::claude_roots::discover(&home, &configs, claude_auto)
     };
     #[cfg(not(target_os = "macos"))]
     let errors = Vec::new();
@@ -81,18 +78,40 @@ fn roots() -> (Vec<(&'static str, PathBuf)>, Vec<String>) {
             },
         ));
     }
-    for root in crate::paths::configured("codex") {
+    for root in codex_configs {
         result.push(("codex", root.join("sessions")));
         result.push(("codex", root.join("archived_sessions")));
+    }
+    let mut errors = errors;
+    if let Some(home) = dirs::home_dir() {
+        let discovered = super::synara_roots::discover(
+            &home,
+            std::env::var("SYNARA_HOME").ok().as_deref(),
+            claude_auto,
+            codex_auto,
+        );
+        result.extend(discovered.roots);
+        errors.extend(discovered.errors);
     }
     (result, errors)
 }
 pub fn scan(cache: &mut HashMap<PathBuf, CachedFile>, pricing: &ModelPricing) -> Snapshot {
+    let (roots, errors) = roots();
+    scan_roots(cache, pricing, roots, errors, true)
+}
+
+pub(super) fn scan_roots(
+    cache: &mut HashMap<PathBuf, CachedFile>,
+    pricing: &ModelPricing,
+    roots: Vec<super::synara_roots::Root>,
+    mut errors: Vec<String>,
+    include_opencode: bool,
+) -> Snapshot {
+    let roots = super::synara_roots::canonical_roots(roots, &mut errors);
     let mut snapshot = Snapshot::default();
     let mut seen = HashSet::new();
     let mut records = Vec::new();
     let since = Utc::now() - Duration::days(90);
-    let (roots, errors) = roots();
     snapshot.errors.extend(errors);
     for (provider, root) in roots {
         if !root.exists() {
@@ -184,12 +203,14 @@ pub fn scan(cache: &mut HashMap<PathBuf, CachedFile>, pricing: &ModelPricing) ->
         }
     }
     cache.retain(|path, _| seen.contains(path));
-    let opencode = super::opencode::scan(since);
-    if opencode.available {
-        snapshot.available_providers.push("opencode".into());
+    if include_opencode {
+        let opencode = super::opencode::scan(since);
+        if opencode.available {
+            snapshot.available_providers.push("opencode".into());
+        }
+        snapshot.errors.extend(opencode.errors);
+        records.extend(opencode.records);
     }
-    snapshot.errors.extend(opencode.errors);
-    records.extend(opencode.records);
     snapshot.events = dedup(records)
         .iter()
         .map(|record| record.priced(pricing))

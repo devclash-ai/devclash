@@ -38,24 +38,32 @@ pub fn configuration_error() -> Option<String> {
         .and_then(|path| saved_sources(Path::new(&path)).err())
 }
 pub fn configured(provider: &str) -> Vec<PathBuf> {
+    configured_with_discovery(provider).0
+}
+
+// Explicit source choices remain a boundary for automatic usage discovery.
+pub fn configured_with_discovery(provider: &str) -> (Vec<PathBuf>, bool) {
     let Some(home) = dirs::home_dir() else {
-        return vec![];
+        return (vec![], false);
     };
     let variable = format!("DEVCLASH_{}_DIRS", provider.to_ascii_uppercase());
     if let Ok(value) = std::env::var(variable) {
-        return value
-            .lines()
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .map(|value| expand(value, &home))
-            .collect();
+        return (
+            value
+                .lines()
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(|value| expand(value, &home))
+                .collect(),
+            false,
+        );
     }
     let saved = std::env::var_os("DEVCLASH_SOURCE_SETTINGS")
         .map(|path| saved_sources(Path::new(&path)))
         .transpose();
     let config = match saved {
         Ok(value) => value.flatten(),
-        Err(_) => return vec![],
+        Err(_) => return (vec![], false),
     };
     if let Some(config) = config {
         let values = match provider {
@@ -66,7 +74,10 @@ pub fn configured(provider: &str) -> Vec<PathBuf> {
             _ => vec![],
         };
         if !values.is_empty() {
-            return values.iter().map(|value| expand(value, &home)).collect();
+            return (
+                values.iter().map(|value| expand(value, &home)).collect(),
+                false,
+            );
         }
     }
     let legacy = match provider {
@@ -77,14 +88,17 @@ pub fn configured(provider: &str) -> Vec<PathBuf> {
     };
     if let Ok(value) = std::env::var(legacy) {
         if !value.trim().is_empty() {
-            return value
-                .split(',')
-                .map(str::trim)
-                .map(|value| expand(value, &home))
-                .collect();
+            return (
+                value
+                    .split(',')
+                    .map(str::trim)
+                    .map(|value| expand(value, &home))
+                    .collect(),
+                false,
+            );
         }
     }
-    defaults(provider, &home, std::env::consts::OS)
+    (defaults(provider, &home, std::env::consts::OS), true)
 }
 pub fn defaults(provider: &str, home: &Path, platform: &str) -> Vec<PathBuf> {
     let config = std::env::var("XDG_CONFIG_HOME")

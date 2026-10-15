@@ -17,6 +17,7 @@ mod project;
 mod project_tests;
 pub use project::Project;
 mod scan;
+mod synara_roots;
 
 use crate::cloud::records::{normalize, CloudRecord};
 use crate::pricing::PricingStore;

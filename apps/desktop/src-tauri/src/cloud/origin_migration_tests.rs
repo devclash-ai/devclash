@@ -338,3 +338,36 @@ fn logout_and_revocation_cannot_revive_old_origin_entry_after_reload() {
         assert!(reloaded.preferences.lock().unwrap().pending.is_empty());
     }
 }
+
+#[test]
+fn same_origin_upgrade_reload_preserves_login_consent_and_queue_after_server_failure() {
+    let _serial = serial();
+    for enabled in [false, true] {
+        let fixture = Fixture::new();
+        let cloud = fixture.load();
+        let credential = cloud.credential().unwrap();
+        cloud.set_sync(enabled).unwrap();
+        let before = serde_json::to_value(fixture.saved()).unwrap();
+        drop(cloud);
+
+        // Replacing the executable constructs a new store against the same
+        // persistent directory and OS credential entry, independent of version.
+        let mut upgraded = fixture.load();
+        assert_eq!(upgraded.credential().unwrap().token, credential.token);
+        assert_eq!(upgraded.sync_enabled().unwrap(), enabled);
+        let (api, server) = response_server(503);
+        upgraded.api = Some(api);
+        assert!(upgraded.refresh_account().is_err());
+        server.join().unwrap();
+        let status = upgraded.status().unwrap();
+        assert_eq!(status.user.unwrap().id, credential.user.id);
+        assert_eq!(status.sync_enabled, enabled);
+        assert_eq!(serde_json::to_value(fixture.saved()).unwrap(), before);
+        drop(upgraded);
+
+        let reloaded = fixture.load();
+        assert_eq!(reloaded.credential().unwrap().token, credential.token);
+        assert_eq!(reloaded.sync_enabled().unwrap(), enabled);
+        assert!(!fixture.saved().session_revoked);
+    }
+}

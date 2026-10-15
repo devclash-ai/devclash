@@ -1,0 +1,68 @@
+{
+  "version": "0.1.0-beta.8",
+  "notes": "# DevClash 0.1.0-beta.8\n\nAutomatically detect Claude and Codex usage from Synara accounts on macOS, Windows and Linux.\n\n- Discover Synara account homes and configured provider paths automatically.\n- Avoid counting the same usage twice when logs are linked, copied, archived or discovered through more than one account path.\n- Keep a consistent gap between the rank card and Providers.\n- Preserve the existing sign-in session, display preferences and cloud-sync consent during updates. Expired or revoked sessions still require sign-in.\n- Carry forward the update-notice overlap fix and browser-based connection flow.\n\nThis remains a beta. Signed installers and the matching reviewed desktop source are published together.\n\nBuilt locally on native hosts. Source commit: eaa7d9cc3d7a0d8acd33b6b33c4b2bf2c1f84fd8.\n",
+  "pub_date": "2026-10-15T08:40:20.404491+00:00",
+  "platforms": {
+    "darwin-aarch64": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/macos-aarch64-DevClash.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekpWUS9EejJKVDA3cmdTWmtUSUlwRzlpNEZaTWFtUVBrd0Zkd3hVSldKWHRQRk1WTW5xNjNsbjg0YmZ0QWVTK2xPTis5UjVJZUxhTlVJTVJyQ1pHc1FZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMDUyMDk3CWZpbGU6RGV2Q2xhc2guYXBwLnRhci5negl2ZXJzaW9uOjAuMS4wLWJldGEuOAoyQVk1RElOazdtdE1jYk9adVNHSkFWZExEUXBGTHhEV3FnTE1SdVViNVUxRFc2NWNNWmpLT0Jza1VBWVFuUUFFUmE4QmxvZnBCeks3eldLdThnVnFBdz09Cg=="
+    },
+    "darwin-x86_64": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/macos-x86_64-DevClash.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ek5nQWRDVWUzeGRVNGRkWFFObmZrOXRWRzlObG91STdKQVdPOE9WemlucWUxcVc0QThUK2lPcEtxdEpxcFhyWmNkRmpPWkhWYjJzbjNoOU0xMEhqbGdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMDUyNDMyCWZpbGU6RGV2Q2xhc2guYXBwLnRhci5negl2ZXJzaW9uOjAuMS4wLWJldGEuOApiTTBlTFAzSmt1M1JRSDdtRlVGL3RFOExZalBKSXZvcktMakVFWFFHWk9GaGljbDRBR0NRb1oybmF0SU1hN200WFdhclR4UWVoWG5rOTdGZzFsRGhEQT09Cg=="
+    },
+    "windows-x86_64": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/windows-x86_64-DevClash_0.1.0-beta.8_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ek9lRWJ1clJBanVJMm9IZjBuUlk0QXVvWFpseTI2YjlqN2VkaDJXS3dXMWdCTDBRZ0UrWjhOU2pxdUR6MmlDYWd5cUdDeVgxTS9KWGxFS0IrTksrZlFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMDUzNTcxCWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS44X3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjEuMC1iZXRhLjgKT1AwMGdRaU1NcjUvS0c3a1lXTVpyTEFPbzJObDZKWUwzaVpOT0dydHoxMHZzWGJURmNJSWRQOUlJNnpMRjl2aXRybG5pOTRnQ2tsOUZBWDdoYm1NQ1E9PQo="
+    },
+    "linux-x86_64-appimage": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/linux-x86_64-DevClash_0.1.0-beta.8_amd64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekhlTVM0VEhFb1FQbFQyak9seWhMdEF5Njl4M25zZkg0U2ZObGNOdkpyVjFHUG1LckhGTFZldGtsZElmSkNpYXVoZ3Q3TkVjNmNjZUdobHhqWXNTNndZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMDUyMDkxCWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS44X2FtZDY0LkFwcEltYWdlCXZlcnNpb246MC4xLjAtYmV0YS44Cm5RS0J6RTNsSlJNSmVmV24xSFpoMER2RnBERjh6ZUwwem9iM0l6eEs2M0p5clI1UER0T0NtT1p6VDlaNmt4aHRpcER6SHVxaVFqaDRGbnJLTS9BSUN3PT0K"
+    },
+    "linux-x86_64-deb": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/linux-x86_64-DevClash_0.1.0-beta.8_amd64.deb",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ek85TGo3OS84bm4yUkN1TG44R0hFYWREbVRuWEMrWUxKZ1UzRW83MXhNb1VSNDhvdnY5NXZlTFRPWlVyOFQ1SUFTOHhJYTltRFlsb1BqYXpwazRKQndJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMDUyMDkxCWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS44X2FtZDY0LmRlYgl2ZXJzaW9uOjAuMS4wLWJldGEuOAphb01WZE5MVmxPbTNteFZtN1M5RlJmcG5lZE9QM2IvZm9aY3NTY0ovcHlUTzZ3cFFjVDlieGY0cmxJZGhXR2xhMG5ha212Q0t1U2p6alRTSE9DZTVEUT09Cg=="
+    },
+    "linux-x86_64": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/linux-x86_64-DevClash_0.1.0-beta.8_amd64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekhlTVM0VEhFb1FQbFQyak9seWhMdEF5Njl4M25zZkg0U2ZObGNOdkpyVjFHUG1LckhGTFZldGtsZElmSkNpYXVoZ3Q3TkVjNmNjZUdobHhqWXNTNndZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMDUyMDkxCWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS44X2FtZDY0LkFwcEltYWdlCXZlcnNpb246MC4xLjAtYmV0YS44Cm5RS0J6RTNsSlJNSmVmV24xSFpoMER2RnBERjh6ZUwwem9iM0l6eEs2M0p5clI1UER0T0NtT1p6VDlaNmt4aHRpcER6SHVxaVFqaDRGbnJLTS9BSUN3PT0K"
+    }
+  },
+  "downloads": [
+    {
+      "platform": "macos",
+      "arch": "aarch64",
+      "kind": "dmg",
+      "name": "macos-aarch64-DevClash_0.1.0-beta.8_aarch64.dmg",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/macos-aarch64-DevClash_0.1.0-beta.8_aarch64.dmg"
+    },
+    {
+      "platform": "macos",
+      "arch": "x86_64",
+      "kind": "dmg",
+      "name": "macos-x86_64-DevClash_0.1.0-beta.8_x64.dmg",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/macos-x86_64-DevClash_0.1.0-beta.8_x64.dmg"
+    },
+    {
+      "platform": "windows",
+      "arch": "x86_64",
+      "kind": "nsis",
+      "name": "windows-x86_64-DevClash_0.1.0-beta.8_x64-setup.exe",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/windows-x86_64-DevClash_0.1.0-beta.8_x64-setup.exe"
+    },
+    {
+      "platform": "linux",
+      "arch": "x86_64",
+      "kind": "AppImage",
+      "name": "linux-x86_64-DevClash_0.1.0-beta.8_amd64.AppImage",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/linux-x86_64-DevClash_0.1.0-beta.8_amd64.AppImage"
+    },
+    {
+      "platform": "linux",
+      "arch": "x86_64",
+      "kind": "deb",
+      "name": "linux-x86_64-DevClash_0.1.0-beta.8_amd64.deb",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.8/linux-x86_64-DevClash_0.1.0-beta.8_amd64.deb"
+    }
+  ]
+}

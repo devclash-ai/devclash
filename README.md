@@ -85,7 +85,7 @@ For account-specific help or a potential security issue, use [private support](h
 
 ## About This Repository
 
-This repository contains the **MIT-licensed desktop application source**, bundled resources, build instructions and community feedback. Signed installers and release notes are available in [Releases](https://github.com/devclash-ai/devclash/releases). Existing automatic updates continue through the original release infrastructure.
+This repository contains the **MIT-licensed desktop application source**, bundled resources, build instructions and community feedback. Signed installers and release notes are available in [Releases](https://github.com/devclash-ai/devclash/releases). Automatic updates check the DevClash API and download signed packages from this repository. Existing installations keep working through the same API endpoint; older release links remain available for compatibility.
 
 Start with [Building From Source](apps/desktop/README.md). The hosted backend and website are maintained separately and are not part of this source release. Private deployment configuration, credentials, signing keys and internal Git history are excluded.
 

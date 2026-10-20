@@ -14,6 +14,10 @@ impl CloudStore {
                 self.finish_origin_migration(&mut preferences)?;
                 Ok(encoded)
             }
+            // QA never probes production or legacy services, even with copied preferences.
+            Err(keyring::Error::NoEntry) if self.credential_service != SERVICE => {
+                Err("Sign in to this isolated QA profile to save usage history.".into())
+            }
             Err(keyring::Error::NoEntry) => {
                 let mut preferences = self
                     .preferences

@@ -53,6 +53,13 @@ impl PricingStore {
             directory,
         }
     }
+    /// Read current local prices without starting a network refresh (diagnostic exports).
+    pub fn cached(&self) -> Result<Arc<ModelPricing>, String> {
+        self.state
+            .lock()
+            .map(|state| Arc::clone(&state.current))
+            .map_err(|_| "Local pricing is unavailable. Restart DevClash and try again.".into())
+    }
     /// Usage scanning always proceeds with bundled/cached rates. Refresh public lists separately.
     pub fn current(&self) -> Arc<ModelPricing> {
         let mut state = self.state.lock().unwrap();

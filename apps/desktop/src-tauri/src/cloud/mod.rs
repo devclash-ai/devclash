@@ -3,6 +3,7 @@ mod browser_login;
 mod api;
 pub mod commands;
 mod credentials;
+mod identity;
 mod origin_migration;
 mod origins;
 mod projects;
@@ -150,18 +151,27 @@ pub struct CloudStore {
     syncing: Mutex<()>,
     browser_login: Mutex<Option<browser_login::BrowserLogin>>,
     keyring: Option<keyring::Entry>,
+    credential_service: String,
 }
 impl CloudStore {
-    pub fn load(directory: PathBuf) -> Self {
+    pub fn load(directory: PathBuf, identifier: &str) -> Self {
         let origin = std::env::var("DEVCLASH_API_URL")
             .or_else(|_| std::env::var("USAGERANK_API_URL"))
             .unwrap_or_else(|_| BUNDLED_ORIGIN.into());
         let app_override = std::env::var("DEVCLASH_APP_URL")
             .ok()
             .or_else(|| option_env!("DEVCLASH_APP_URL").map(str::to_owned));
-        Self::load_with_origins(directory, &origin, app_override.as_deref())
+        let isolated = cfg!(debug_assertions)
+            || std::env::var_os("DEVCLASH_DATA_DIR").is_some()
+            || std::env::var_os("USAGERANK_DATA_DIR").is_some();
+        let service = identity::service(&directory, identifier, isolated);
+        Self::load_scoped(directory, &origin, app_override.as_deref(), service)
     }
+    #[cfg(test)]
     fn load_with_origins(directory: PathBuf, origin: &str, app_override: Option<&str>) -> Self {
+        Self::load_scoped(directory, origin, app_override, SERVICE.into())
+    }
+    fn load_scoped(directory: PathBuf, origin: &str, app_override: Option<&str>, credential_service: String) -> Self {
         let path = directory.join("cloud-sync.json");
         let (mut preferences, mut load_error) = match crate::storage::read_json::<Preferences>(
             &path,
@@ -224,7 +234,7 @@ impl CloudStore {
         };
         let keyring =
             api.as_ref()
-                .and_then(|api| match keyring::Entry::new(SERVICE, &api.origin) {
+                .and_then(|api| match keyring::Entry::new(&credential_service, &api.origin) {
                     Ok(entry) => Some(entry),
                     Err(_) => {
                         eprintln!("Cloud OS credential store could not be initialized");
@@ -241,6 +251,7 @@ impl CloudStore {
             syncing: Mutex::new(()),
             browser_login: Mutex::new(None),
             keyring,
+            credential_service,
         }
     }
     fn api(&self) -> Result<&Api, String> {

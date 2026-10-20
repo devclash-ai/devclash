@@ -1,0 +1,94 @@
+.share-dialog { padding: 30px 35px; }
+.share-dialog .share-subtitle { font-size: 13px; margin: 0 0 20px; }
+.share-tabs { display: flex; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--subtle); margin-bottom: 18px; }
+.share-tabs button { flex: 1; padding: 10px 8px; color: var(--muted); border-right: 1px solid var(--border); }
+.share-tabs button:last-child { border-right: 0; }
+.share-tabs button[aria-pressed=true] { background: var(--blue); color: white; font-weight: 600; }
+.share-tabs button:focus-visible { outline-offset: -3px; }
+.share-field { display: grid; gap: 7px; font-size: 13px; font-weight: 550; margin-bottom: 15px; }
+.share-field select, .share-field input, .share-field textarea { width: 100%; min-width: 0; background: var(--subtle); border: 1px solid var(--border); border-radius: 7px; color: var(--text); padding: 10px 12px; font: 400 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.share-field textarea { resize: vertical; min-height: 92px; max-height: 190px; }
+.share-field textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.share-reset { font-size: 11px; margin-top: -7px; margin-bottom: 12px; }
+.share-fields { border: 0; padding: 0; margin: 0 0 14px; display: flex; gap: 25px; }
+.share-fields legend { font-size: 13px; font-weight: 550; padding: 0 0 9px; }
+.share-fields label { display: inline-flex; position: relative; gap: 9px; align-items: center; font-size: 13px; cursor: pointer; }
+.share-fields input { position: absolute; width: 20px; height: 20px; opacity: 0; margin: 0; }
+.share-check { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid var(--muted); border-radius: 4px; }
+.share-fields input:checked + .share-check { background: var(--blue); border-color: var(--blue); color: white; }
+.share-fields input:focus-visible + .share-check { outline: 2px solid var(--blue); outline-offset: 3px; }
+.share-preview-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; margin-bottom: 6px; }
+/* Keep exported cards in the approved dark style regardless of the app theme. */
+.share-card-container { container-type: inline-size; }
+.share-card { --bg: #1c252d; --text: #f5f7fb; --muted: #aabed5; --blue: #0783ff; --border: #3b4955; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 4.8cqw; overflow: hidden; aspect-ratio: 1200 / 630; display: flex; flex-direction: column; }
+.share-card-with-cost { aspect-ratio: 1200 / 720; }
+.share-card-header { display: flex; align-items: center; justify-content: space-between; gap: 3cqw; }
+.share-card-header .brand-small { width: 23cqw; height: auto; }
+.share-card-header > span { color: var(--muted); font-size: 2cqw; text-align: right; }
+.share-usage-main { flex: 1; display: flex; align-items: center; gap: 2cqw; min-height: 0; padding-top: 2cqw; }
+.share-hero { flex: 0 0 39%; min-width: 0; }
+.share-eyebrow { display: block; font-size: 1.8cqw; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.share-hero > strong { display: block; font-size: 12cqw; line-height: 1.1; letter-spacing: -.06em; margin: 2.4cqw 0 .8cqw; }
+.share-hero-label { display: block; font-size: 3cqw; color: var(--muted); }
+.share-hero > .share-without-tokens { font-size: 7cqw; }
+.share-card-bottom { border-top: 1px solid var(--border); padding-top: 3cqw; display: flex; align-items: flex-end; justify-content: space-between; gap: 2cqw; }
+.share-card-usage .share-card-bottom { flex-direction: column; align-items: stretch; }
+.share-card-providers { display: grid; gap: 3cqw; width: 100%; min-width: 0; }
+.share-card-providers:empty { display: none; }
+.share-provider { display: flex; align-items: center; gap: 2cqw; border-right: 1px solid var(--border); padding-right: 3cqw; }
+.share-provider:last-child { border-right: 0; padding-right: 0; }
+.share-provider .provider-icon { width: 5.8cqw; height: 5.8cqw; border-radius: 1.2cqw; flex: 0 0 auto; }
+.share-provider .provider-icon img { width: 75%; height: 75%; }
+.share-provider span, .share-cost > span { color: var(--muted); font-size: 2cqw; }
+.share-provider b, .share-cost b { display: block; color: var(--text); margin-top: .4cqw; font-weight: 650; font-size: 3.5cqw; }
+.share-cost { display: flex; align-self: flex-start; align-items: baseline; flex-wrap: wrap; column-gap: 1.8cqw; row-gap: .5cqw; }
+.share-cost > span { font-size: 2.4cqw; }
+.share-cost b { margin: 0; font-size: 3cqw; }
+.share-rank-main { flex: 1; display: flex; align-items: center; gap: 5cqw; min-height: 0; }
+.share-rank-hero { flex: 1; min-width: 0; }
+.share-rank-hero > strong { display: block; line-height: 1.05; letter-spacing: -.055em; margin-top: 2cqw; }
+.share-rank-hero .share-hero-label { font-size: 3.2cqw; margin-top: 1cqw; }
+.share-rank-details { width: 37%; border-left: .65cqw solid var(--blue); padding-left: 4.6cqw; display: grid; gap: 3cqw; }
+.share-rank-details b { display: block; font-size: 7.2cqw; line-height: 1.2; margin-top: 1cqw; letter-spacing: -.04em; }
+.share-rank-details strong { display: block; font-size: 3.1cqw; margin-top: 1cqw; }
+.share-motto { font-size: 2.5cqw; color: var(--muted); }
+.share-footer { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 18px; }
+.share-dialog .share-footer > .primary { margin: 0; width: 100%; padding: 11px; }
+.share-secondary { display: flex; gap: 10px; margin-top: 9px; }
+.share-secondary .button { flex: 1; }
+.share-dialog .share-hint { font-size: 11px; line-height: 1.5; margin-top: 12px; color: var(--muted); }
+.share-copy-card { font-size: 11px; margin-top: 8px; }
+.share-dialog .share-message { color: var(--text); font-size: 12px; margin-top: 12px; overflow-wrap: anywhere; }
+.share-dialog .share-empty { font-size: 13px; padding: 16px 0; }
+@media (max-width: 480px) { .share-dialog { padding: 26px 22px; } .share-fields { gap: 16px; } }
+
+.share-select-wrap { position: relative; display: block; }
+.share-select-wrap select { appearance: none; -webkit-appearance: none; min-height: 40px; padding-right: 34px; }
+.share-select-wrap > svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+.share-trend { flex: 1; min-width: 0; align-self: center; padding-top: 3cqw; }
+.share-trend .sparkline svg { height: 12cqw; width: 100%; }
+.share-trend .sparkline-labels { display: flex; justify-content: space-between; gap: 0; font-size: 1.3cqw; margin-top: 1cqw; color: var(--muted); }
+.share-period-select select { padding-left: 39px; }
+.share-select-wrap > .share-calendar { left: 12px; right: auto; color: var(--text); }
+
+.share-paste-step { margin: 12px 0 0; color: var(--text); font-size: 13px; }
+.share-paste-step kbd { background: var(--subtle); border: 1px solid var(--border); border-radius: 4px; padding: 2px 5px; font: inherit; font-weight: 600; }
+
+.share-card-header { flex-shrink: 0; }
+.share-card .share-card-header .brand-small { min-height: 0; height: 4.8cqw; object-fit: contain; object-position: left; }
+.share-card .share-eyebrow { white-space: nowrap; }
+.share-card-bottom { flex-shrink: 0; }
+.share-card-dense .share-card-providers { gap: 1.5cqw; }
+.share-card-dense .share-provider { gap: .9cqw; padding-right: 1.5cqw; }
+.share-card-dense .share-provider .provider-icon { width: 4.8cqw; height: 4.8cqw; }
+.share-card-dense .share-provider span { font-size: 2cqw; }
+.share-card-dense .share-provider b { font-size: 3.2cqw; }
+
+
+.share-caption-options { border: 0; padding: 0; margin: 0 0 9px; min-width: 0; }
+.share-caption-options legend { font-size: 13px; font-weight: 550; padding: 0 0 9px; }
+.share-caption-options > div { display: flex; gap: 6px; }
+.share-caption-options button { flex: 1; min-width: 0; padding: 7px 5px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-size: 12px; }
+.share-caption-options button[aria-pressed=true] { color: var(--blue); border-color: var(--blue); background: color-mix(in srgb, var(--blue) 10%, transparent); font-weight: 600; }
+.share-caption-options button:hover { color: var(--blue); }
+.share-caption-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

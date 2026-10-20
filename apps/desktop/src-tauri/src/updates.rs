@@ -48,6 +48,12 @@ pub struct UpdateStore {
     wake: Condvar,
 }
 
+fn channel_allows_updates(identifier: &str, debug: bool, updater_fixture: bool) -> bool {
+    updater_fixture || (identifier == "ai.devclash.desktop" && !debug)
+}
+fn updates_allowed(app: &AppHandle) -> bool {
+    channel_allows_updates(&app.config().identifier, cfg!(debug_assertions), cfg!(feature = "updater-qa"))
+}
 fn automatic_preference(value: &Value) -> bool {
     value
         .get("autoUpdates")
@@ -80,7 +86,7 @@ fn publish(app: &AppHandle) {
 pub fn apply_preferences(app: &AppHandle, preferences: &Value) {
     if let Some(store) = app.try_state::<UpdateStore>() {
         let mut inner = store.inner.lock().unwrap();
-        let enabled = automatic_preference(preferences);
+        let enabled = updates_allowed(app) && automatic_preference(preferences);
         if enabled && !inner.status.enabled {
             inner.next_check = Instant::now();
         }
@@ -104,6 +110,7 @@ pub fn initialize(app: &AppHandle, directory: &Path) {
     } else {
         true
     };
+    let enabled = enabled && updates_allowed(app);
     app.manage(UpdateStore {
         inner: Mutex::new(Inner {
             status: UpdateStatus {
@@ -190,6 +197,18 @@ pub async fn install_update(app: AppHandle) -> UpdateStatus {
 }
 
 async fn perform_check(app: AppHandle, automatic: bool) -> UpdateStatus {
+    if !updates_allowed(&app) {
+        let store = app.state::<UpdateStore>();
+        let mut inner = store.inner.lock().unwrap();
+        inner.status.phase = Phase::Error;
+        inner.status.error = Some("Production updates are disabled in QA and preview builds.".into());
+        inner.status.enabled = false;
+        eprintln!("Production update check blocked for QA/preview build");
+        let result = inner.status.clone();
+        drop(inner);
+        publish(&app);
+        return result;
+    }
     {
         let store = app.state::<UpdateStore>();
         let mut inner = store.inner.lock().unwrap();
@@ -673,5 +692,18 @@ mod tests {
         assert_eq!(retry_delay(1), Duration::from_secs(900));
         assert_eq!(retry_delay(2), Duration::from_secs(1800));
         assert_eq!(retry_delay(100), CHECK_INTERVAL);
+    }
+}
+
+#[cfg(test)]
+mod isolation_tests {
+    #[test]
+    fn qa_and_debug_builds_cannot_turn_into_production_through_auto_update() {
+        use super::channel_allows_updates;
+        assert!(channel_allows_updates("ai.devclash.desktop", false, false));
+        assert!(!channel_allows_updates("ai.devclash.desktop", true, false));
+        assert!(!channel_allows_updates("ai.devclash.diagnostics.qa", false, false));
+        assert!(!channel_allows_updates("ai.devclash.desktop.preview", false, false));
+        assert!(channel_allows_updates("ai.devclash.updater.fixture", false, true));
     }
 }

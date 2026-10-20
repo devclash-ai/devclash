@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { providerIDs, providerNames } from '../lib/preferences';
 import type { ProviderID, UsageSnapshot } from '../lib/types';
+import { UsageDiagnostics } from './UsageDiagnostics';
 type Sources = Record<ProviderID, string[]>;
 const empty: Sources = { claude: [], codex: [], cursor: [], opencode: [] };
 const loginOptions: Partial<Record<ProviderID, { source: string; label: string }[]>> = {
@@ -63,5 +64,6 @@ export function SourceDialog({ snapshot, onRefresh, onClose }: { snapshot: Usage
     <p className="cloud-note">Cursor usage is read automatically from your signed-in Cursor account. Provider credentials stay on this device. OpenCode quota is available for Go plans only.</p>
     {error && <p className="cloud-error" role="alert">{error}</p>}
     <button className="button primary" disabled={busy} onClick={() => void save()}>{busy ? 'Please Wait…' : 'Save and Refresh'}</button>
+    <UsageDiagnostics disabled={busy} />
   </section></div>;
 }

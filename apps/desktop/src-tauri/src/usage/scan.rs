@@ -54,7 +54,7 @@ impl Record {
 pub struct CachedFile {
     size: u64,
     modified: u128,
-    records: Vec<Record>,
+    pub(super) records: Vec<Record>,
 }
 
 fn roots() -> (Vec<(&'static str, PathBuf)>, Vec<String>) {
@@ -95,6 +95,15 @@ fn roots() -> (Vec<(&'static str, PathBuf)>, Vec<String>) {
     }
     (result, errors)
 }
+// Export uses the same local log discovery/parsers without quotas, credentials or API calls.
+pub(super) fn diagnostic_scan(
+    cache: &mut HashMap<PathBuf, CachedFile>,
+    pricing: &ModelPricing,
+) -> Snapshot {
+    let (roots, errors) = roots();
+    scan_roots(cache, pricing, roots, errors, false)
+}
+
 pub fn scan(cache: &mut HashMap<PathBuf, CachedFile>, pricing: &ModelPricing) -> Snapshot {
     let (roots, errors) = roots();
     scan_roots(cache, pricing, roots, errors, true)

@@ -140,7 +140,7 @@ fn loading_old_queue_discards_cursor_imports_and_keeps_account_and_other_provide
         ..Preferences::default()
     };
     crate::storage::write_json(&path, &preferences).unwrap();
-    let cloud = CloudStore::load(directory.clone());
+    let cloud = CloudStore::load(directory.clone(), "ai.devclash.desktop");
     let saved: Preferences = crate::storage::read_json(&path).unwrap();
     assert_eq!(cloud.status().unwrap().pending_count, 4);
     assert_eq!(saved.pending.len(), 4);
@@ -273,7 +273,7 @@ fn desktop_session_stays_native_sync_needs_consent_and_revocation_stops_uploads(
         }),
         syncing: Mutex::new(()),
         browser_login: Mutex::new(None),
-        keyring: Some(keyring::Entry::new(SERVICE, &origin).unwrap()),
+        keyring: Some(keyring::Entry::new(SERVICE, &origin).unwrap()), credential_service: SERVICE.into(),
     };
     assert!(cloud.status().unwrap().user.is_none());
     let challenge = cloud
@@ -487,7 +487,7 @@ fn unavailable_project_retries_only_affected_pending_usage_as_unassigned() {
         preferences: Mutex::new(preferences),
         status: Mutex::new(Status::default()),
         syncing: Mutex::new(()),
-        keyring: None,
+        keyring: None, credential_service: SERVICE.into(),
     };
     let status = cloud.sync(vec![]).unwrap();
     assert_eq!(status.pending_count, 0);
@@ -569,7 +569,7 @@ fn offline_project_refresh_does_not_turn_into_a_persistent_sync_failure() {
             ..Status::default()
         }),
         syncing: Mutex::new(()),
-        keyring: None,
+        keyring: None, credential_service: SERVICE.into(),
     };
     assert!(cloud.refresh_projects().is_err());
     assert_eq!(cloud.status().unwrap().projects.len(), 1);
@@ -637,7 +637,7 @@ fn offline_queue_survives_restart_and_automatic_retry_publishes_progress() {
         status: Mutex::new(Status::default()),
         syncing: Mutex::new(()),
         browser_login: Mutex::new(None),
-        keyring: None,
+        keyring: None, credential_service: SERVICE.into(),
     };
     let cloud = make(Preferences {
         origin: origin.clone(),

@@ -4,6 +4,7 @@ mod claude_roots;
 mod codex;
 mod cursor;
 mod daily;
+pub mod diagnostics;
 mod limits;
 #[cfg(all(test, target_os = "macos"))]
 mod mac_live_qa;

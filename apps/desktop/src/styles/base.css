@@ -138,3 +138,10 @@ svg { flex-shrink: 0; }
 .update-ready-notice > svg { color: var(--blue); }
 .update-ready-notice > span { flex: 1 1 180px; overflow-wrap: anywhere; }
 .update-ready-notice .text-button { flex-shrink: 0; font-size: 12px; }
+
+.usage-diagnostics { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border, #65758855); }
+.usage-diagnostics h2 { margin: 0 0 8px; font-size: 17px; }
+.diagnostics-dates { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.diagnostics-dates label { display: grid; flex: 1 1 150px; gap: 6px; font-size: 12px; }
+.diagnostics-dates input { min-width: 0; width: 100%; padding: 9px 10px; border: 1px solid #65758866; border-radius: 8px; background: transparent; color: inherit; font: inherit; color-scheme: inherit; }
+.diagnostics-result { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }

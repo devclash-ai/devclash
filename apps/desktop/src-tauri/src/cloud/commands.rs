@@ -220,3 +220,9 @@ pub async fn cloud_cancel_browser_login(
     .await
     .map_err(|_| "Browser sign-in could not be cancelled.")?
 }
+
+#[tauri::command]
+pub async fn cloud_share_rank(app: tauri::AppHandle, period: String) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || app.state::<CloudStore>().share_rank(&period))
+        .await.map_err(|_| "Your rank could not be loaded.")?
+}

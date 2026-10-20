@@ -17,7 +17,7 @@ fn store(path: PathBuf, origin: &str, preferences: Preferences) -> CloudStore {
         api: Some(Api::new(origin).unwrap()), app_origin: Ok(origin.into()), path,
         credential: Mutex::new(Some(Credential {token: "synthetic-token".into(), user: User {id: "synthetic-user".into(), email: "qa@example.invalid".into()}, expires_at: (Utc::now()+chrono::Duration::days(1)).to_rfc3339()})),
         preferences: Mutex::new(preferences), status: Mutex::new(Status::default()),
-        syncing: Mutex::new(()), browser_login: Mutex::new(None), keyring: None,
+        syncing: Mutex::new(()), browser_login: Mutex::new(None), keyring: None, credential_service: SERVICE.into(),
     }
 }
 fn preferences(origin: &str) -> Preferences {

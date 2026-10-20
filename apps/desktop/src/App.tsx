@@ -6,7 +6,7 @@ import { Download, X } from 'lucide-react';
 import { enabledInOrder, loadPreferences, normalizePreferences, preferencesKey, savePreferences } from './lib/preferences';
 import { aggregateUsage, demoSnapshot, emptySnapshot } from './lib/usage';
 import { trayContent } from './lib/tray';
-import { closeWindow, configureWidget, getAutostart, native, openCustomization, openWidget, readUsage, setAutostart, setTray, shareImage } from './lib/desktop';
+import { closeWindow, configureWidget, getAutostart, native, openCustomization, openWidget, readUsage, setAutostart, setTray } from './lib/desktop';
 import type { Preferences, Surface, UsageSnapshot } from './lib/types';
 import type { ProviderID } from './lib/types';
 import { retryProviderAuthorization } from './lib/providerAuthorization';
@@ -16,6 +16,7 @@ import { Dashboard } from './components/Dashboard';
 import { FloatingWidget } from './components/Widget';
 import { Customization } from './components/Customization';
 import { Concepts } from './components/Concepts';
+import { ShareDialog } from './components/ShareDialog';
 import { CloudDialog } from './components/CloudDialog';
 import { SourceDialog } from './components/SourceDialog';
 import { UpdatePanel } from './components/UpdatePanel';
@@ -38,7 +39,7 @@ export function App() {
   const authorizing = useRef(false);
   const [customizing, setCustomizing] = useState(windowType === 'customize');
   const [surface, setSurface] = useState<Surface>((['dashboard', 'widget', 'menubar'].includes(params.get('surface') ?? '') ? params.get('surface') : 'widget') as Surface);
-  const [dialog, setDialog] = useState<'account' | 'rank' | 'sources' | 'updates' | null>(null);
+  const [dialog, setDialog] = useState<'account' | 'rank' | 'sources' | 'updates' | 'share' | null>(null);
   const [cloud, setCloud] = useState<CloudStatus>(localCloudStatus);
   const join = useLeaderboardJoin(native, cloud, setCloud, () => setDialog('rank'));
   const [updates, setUpdates] = useState<UpdateStatus>(() => initialUpdateStatus(prefs.autoUpdates));
@@ -187,7 +188,15 @@ export function App() {
     try { if (native) await closeWindow(); else window.close(); }
     catch (error) { console.error(error); notify('The widget could not be hidden. Try again.'); }
   };
-  const share = async (element: HTMLElement) => { try { await shareImage(element); notify('Usage image copied. Paste it into your social post.'); } catch (error) { console.error(error); notify('The share image could not be copied. Please try again.'); } };
+  useEffect(() => {
+    if (!native || windowType !== 'main') return;
+    const listener = listen('open-share-dialog', () => { setCustomizing(false); setDialog('share'); });
+    return () => { void listener.then(off => off()).catch(console.error); };
+  }, []);
+  const share = (_element: HTMLElement) => {
+    if (native && windowType === 'widget') void invoke('open_share_dialog').catch(error => { console.error(error); notify('The share dialog could not be opened. Try Share in the dashboard.'); });
+    else setDialog('share');
+  };
   const autostart = async (enabled: boolean) => {
     try { await setAutostart(enabled); changePreferences({ ...prefs, launchAtLogin: enabled }); }
     catch (error) { console.error(error); notify('Launch at login could not be changed.'); }
@@ -209,7 +218,8 @@ export function App() {
       customizing ? <Customization key={surface} preferences={prefs} snapshot={displayedSnapshot} totals={totals} theme={theme} initialSurface={surface} onChange={changePreferences} onDone={done} onAutostart={enabled => void autostart(enabled)} onWidget={() => void widget()} automaticUpdates={{ enabled: native ? updates.enabled : prefs.autoUpdates, pending: automaticPending || !updateStatusKnown, installMode: updates.installMode, restartRequired: updates.restartRequired }} onAutomaticChange={changeAutomaticUpdates} /> :
       windowType === 'widget' ? <><FloatingWidget preferences={prefs} snapshot={displayedSnapshot} totals={totals} theme={theme} setPeriod={period => changePreferences({ ...prefs, period })} onCustomize={() => void customize('widget')} onShare={element => void share(element)} onRank={() => setDialog('rank')} onHide={() => void hideWidget()} windowDraggable={native} onDragError={() => notify('The widget could not be moved. Try dragging its header again.')} />{sample && <span className="standalone-sample">Sample Data · Design Preview</span>}</> :
       <Dashboard updateNotice={native && updates.phase === 'ready' && updates.restartRequired ? <div className="update-ready-notice" role="status" data-no-share="true"><Download size={17} aria-hidden="true" /><span>DevClash {updates.availableVersion} Is Ready</span><button className="text-button" onClick={() => setDialog('updates')}>Review &amp; Restart</button></div> : undefined} joinState={leaderboardJoinState(cloud, !!displayedSnapshot.rank)} joinBusy={join.busy} onJoin={() => void join.start()} onViewLeaderboard={viewLeaderboard} preferences={prefs} snapshot={displayedSnapshot} totals={totals} theme={theme} period={prefs.period} busy={busy} connected={!!cloud.user} syncEnabled={cloud.syncEnabled} syncTone={cloudSyncTone(cloud)} cloudLabel={cloudSyncLabel(cloud)} accountInitial={cloud.user?.email.charAt(0).toUpperCase()} setPeriod={period => changePreferences({ ...prefs, period })} onCustomize={() => void customize('dashboard')} onRefresh={() => void refresh()} onAccount={() => setDialog('account')} onWidget={() => void widget()} onShare={element => void share(element)} onRank={() => setDialog('rank')} onRetryAuthorization={native ? id => void retryAuthorization(id) : undefined} authorizationPending={authorizationPending} />}
-    {dialog === 'sources' ? <SourceDialog snapshot={snapshot} onRefresh={() => refresh()} onClose={() => setDialog(null)} /> :
+    {dialog === 'share' ? <ShareDialog key={cloud.user?.id ?? "local"} snapshot={displayedSnapshot} initialPeriod={prefs.period} providers={enabledInOrder(prefs)} theme={theme} onClose={() => setDialog(null)} /> :
+      dialog === 'sources' ? <SourceDialog snapshot={snapshot} onRefresh={() => refresh()} onClose={() => setDialog(null)} /> :
       dialog === 'updates' ? <UpdatePanel status={updates} autoUpdates={prefs.autoUpdates} automaticPending={automaticPending || !updateStatusKnown} onAutomaticChange={changeAutomaticUpdates} onStatus={receiveUpdateStatus} onClose={() => setDialog(null)} /> :
       dialog && <CloudDialog theme={theme} key={dialog} type={dialog} status={cloud} join={join} onChange={setCloud} onView={setDialog} onClose={() => setDialog(null)} />}
     {toast && <div className="toast" role="status">{toast}<button className="icon-button" aria-label="Dismiss Notification" onClick={() => setToast('')}><X size={16} /></button></div>}

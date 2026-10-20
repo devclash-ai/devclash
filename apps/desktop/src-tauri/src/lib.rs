@@ -1,4 +1,5 @@
 mod cloud;
+mod sharing;
 mod migration;
 mod paths;
 mod pricing;
@@ -216,8 +217,13 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             read_usage,
+            sharing::open_share_dialog,
+            sharing::open_share_draft,
+            sharing::save_share_image,
             paths::read_sources,
             paths::save_sources,
+            usage::diagnostics::export_usage_diagnostics,
+            usage::diagnostics::open_diagnostics_folder,
             restart_app,
             updates::update_status,
             updates::check_for_updates,
@@ -236,6 +242,7 @@ pub fn run() {
             cloud::commands::cloud_set_active_project,
             cloud::commands::cloud_dismiss_project_warning,
             cloud::commands::cloud_set_rank_period,
+            cloud::commands::cloud_share_rank,
             cloud::commands::cloud_start_browser_login,
             cloud::commands::cloud_poll_browser_login,
             cloud::commands::cloud_cancel_browser_login,
@@ -250,10 +257,20 @@ pub fn run() {
         .setup(|app| {
             #[cfg(feature = "updater-qa")]
             updates::prepare_qa_fixture(app.handle()).map_err(std::io::Error::other)?;
-            let data_directory = std::env::var_os("DEVCLASH_DATA_DIR")
+            let mut data_directory = std::env::var_os("DEVCLASH_DATA_DIR")
                 .or_else(|| std::env::var_os("USAGERANK_DATA_DIR"))
                 .map(std::path::PathBuf::from)
                 .unwrap_or(app.path().app_local_data_dir()?);
+            // A debug build with the release identifier must not reuse release preferences.
+            if cfg!(debug_assertions) && app.config().identifier == "ai.devclash.desktop"
+                && std::env::var_os("DEVCLASH_DATA_DIR").is_none()
+                && std::env::var_os("USAGERANK_DATA_DIR").is_none() {
+                data_directory.set_file_name("ai.devclash.desktop.qa");
+            }
+            if cfg!(debug_assertions) || app.config().identifier != "ai.devclash.desktop" {
+                // Also suppress legacy production-cache migration in alternate bundles.
+                std::env::set_var("DEVCLASH_DATA_DIR", &data_directory);
+            }
             storage::private_directory(&data_directory).map_err(std::io::Error::other)?;
             migration::initialize(&data_directory).map_err(std::io::Error::other)?;
             std::env::set_var(
@@ -262,7 +279,7 @@ pub fn run() {
             );
             let store = UsageStore::load(data_directory.clone());
             app.manage(store);
-            app.manage(cloud::CloudStore::load(data_directory.clone()));
+            app.manage(cloud::CloudStore::load(data_directory.clone(), &app.config().identifier));
             updates::initialize(app.handle(), &data_directory);
             let tray_failed = if let Err(error) = build_tray(app) {
                 eprintln!("System tray unavailable: {error}");

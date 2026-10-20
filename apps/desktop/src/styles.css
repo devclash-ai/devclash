@@ -5,5 +5,6 @@
 @import './styles/customization.css';
 @import './styles/concepts.css';
 @import './styles/cloud-sync.css';
+@import './styles/share.css';
 
 .desktop-connection-code { font-size: 28px; font-weight: 700; letter-spacing: .18em; font-variant-numeric: tabular-nums; text-align: center; user-select: all; }

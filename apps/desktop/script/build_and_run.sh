@@ -6,14 +6,22 @@ VERIFY=false
 if [[ "${1:-}" == "--verify" ]]; then VERIFY=true; elif [[ -n "${1:-}" ]]; then printf 'Usage: %s [--verify]\n' "$0" >&2; exit 2; fi
 export PATH="$HOME/.cargo/bin:$PATH"
 cd "$DESKTOP_DIR"
-# Stop both this binary and the previous product name before rebuilding.
-for name in devclash-desktop usagerank-desktop; do
-  while IFS= read -r process_id; do [[ -n "$process_id" ]] && kill "$process_id"; done < <(pgrep -f "/Contents/MacOS/${name}$" || true)
-done
+# Stop only this checkout's QA process, leaving the installed production app running.
+BUNDLE="$DESKTOP_DIR/src-tauri/target/release/bundle/macos/DevClash QA.app"
+while IFS= read -r process_id; do [[ -n "$process_id" ]] && kill "$process_id"; done < <(ps -axo pid=,command= | awk -v binary="$BUNDLE/Contents/MacOS/devclash-desktop" 'substr($0,index($0,$2)) == binary {print $1}')
+# Offline by default. An explicit test endpoint still uses the isolated QA credential scope.
+export DEVCLASH_API_URL="${DEVCLASH_API_URL-}"
+export DEVCLASH_DATA_DIR="${DEVCLASH_DATA_DIR-$DESKTOP_DIR/artifacts/local-run/data}"
+export DEVCLASH_QUOTAS_DISABLED="${DEVCLASH_QUOTAS_DISABLED-1}"
+export DEVCLASH_CURSOR_FETCH_DISABLED="${DEVCLASH_CURSOR_FETCH_DISABLED-1}"
+# Empty roots suppress automatic discovery; select synthetic folders via explicit overrides.
+export DEVCLASH_CLAUDE_DIRS="${DEVCLASH_CLAUDE_DIRS-}"
+export DEVCLASH_CODEX_DIRS="${DEVCLASH_CODEX_DIRS-}"
+export DEVCLASH_CURSOR_DIRS="${DEVCLASH_CURSOR_DIRS-}"
+export DEVCLASH_OPENCODE_DIRS="${DEVCLASH_OPENCODE_DIRS-}"
 if "$VERIFY"; then npm test; cargo test --manifest-path src-tauri/Cargo.toml --lib; fi
 # Local ad-hoc bundle, without generating an unsigned package for the update feed.
-npm run tauri -- build --bundles app --config '{"bundle":{"createUpdaterArtifacts":false,"macOS":{"signingIdentity":"-"}}}'
-BUNDLE="$DESKTOP_DIR/src-tauri/target/release/bundle/macos/DevClash.app"
+npm run tauri -- build --bundles app --config '{"productName":"DevClash QA","identifier":"ai.devclash.desktop.qa","bundle":{"createUpdaterArtifacts":false,"macOS":{"signingIdentity":"-"}}}'
 /usr/bin/codesign --verify --deep --strict "$BUNDLE"
 LOG_DIR="$DESKTOP_DIR/artifacts/local-run"
 mkdir -p "$LOG_DIR"

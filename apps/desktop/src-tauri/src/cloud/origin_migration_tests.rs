@@ -6,7 +6,7 @@ use std::{
     io::{BufRead, BufReader, Write},
     net::TcpListener,
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc, MutexGuard,
     },
 };
@@ -18,9 +18,13 @@ type Entries = Arc<Mutex<HashMap<(String, String), SharedCredential>>>;
 struct SharedCredential {
     inner: Arc<keyring::mock::MockCredential>,
     fail_write: Arc<AtomicBool>,
+    reads: Arc<AtomicUsize>,
+    writes: Arc<AtomicUsize>,
+    deletes: Arc<AtomicUsize>,
 }
 impl CredentialApi for SharedCredential {
     fn set_secret(&self, secret: &[u8]) -> keyring::Result<()> {
+        self.writes.fetch_add(1, Ordering::SeqCst);
         if self.fail_write.swap(false, Ordering::SeqCst) {
             return Err(keyring::Error::NoStorageAccess(Box::new(
                 std::io::Error::new(
@@ -32,9 +36,11 @@ impl CredentialApi for SharedCredential {
         self.inner.set_secret(secret)
     }
     fn get_secret(&self) -> keyring::Result<Vec<u8>> {
+        self.reads.fetch_add(1, Ordering::SeqCst);
         self.inner.get_secret()
     }
     fn delete_credential(&self) -> keyring::Result<()> {
+        self.deletes.fetch_add(1, Ordering::SeqCst);
         self.inner.delete_credential()
     }
     fn as_any(&self) -> &dyn Any {
@@ -55,6 +61,9 @@ impl CredentialBuilderApi for SharedBuilder {
             .or_insert_with(|| SharedCredential {
                 inner: Arc::new(keyring::mock::MockCredential::default()),
                 fail_write: Arc::new(AtomicBool::new(false)),
+                reads: Arc::new(AtomicUsize::new(0)),
+                writes: Arc::new(AtomicUsize::new(0)),
+                deletes: Arc::new(AtomicUsize::new(0)),
             });
         Ok(Box::new(entry.clone()))
     }
@@ -370,4 +379,52 @@ fn same_origin_upgrade_reload_preserves_login_consent_and_queue_after_server_fai
         assert_eq!(reloaded.sync_enabled().unwrap(), enabled);
         assert!(!fixture.saved().session_revoked);
     }
+}
+
+
+#[test]
+fn qa_never_reads_writes_or_deletes_production_credentials_even_with_copied_preferences() {
+    let _serial = serial();
+    let f = Fixture::new();
+    let encoded = Fixture::entry(origins::LEGACY_API_ORIGIN).get_password().unwrap();
+    Fixture::entry(origins::PRODUCTION_API_ORIGIN).set_password(&encoded).unwrap();
+    let production_calls = || {
+        let entries = f.entries.lock().unwrap();
+        let mut values = entries.iter().filter(|((service, _), _)| !service.starts_with("ai.devclash.desktop.qa.cloud."))
+            .map(|(key, value)| (key.clone(), value.reads.load(Ordering::SeqCst), value.writes.load(Ordering::SeqCst), value.deletes.load(Ordering::SeqCst)))
+            .collect::<Vec<_>>();
+        values.sort(); values
+    };
+    let before = production_calls();
+    let service = identity::service(&f.directory, "ai.devclash.diagnostics.qa", false);
+    let load = || CloudStore::load_scoped(f.directory.clone(), origins::PRODUCTION_API_ORIGIN, None, service.clone());
+    let qa = load();
+    assert!(qa.credential().is_err());
+    assert_eq!(production_calls(), before);
+    // Explicit QA sign-in survives a new process/store and QA sign-out touches only QA.
+    qa.entry().unwrap().set_password(&encoded).unwrap();
+    drop(qa);
+    let restarted = load();
+    assert_eq!(restarted.credential().unwrap().token, "synthetic-origin-transfer-session");
+    restarted.forget_session().unwrap();
+    assert_eq!(production_calls(), before);
+    assert_eq!(Fixture::entry(origins::PRODUCTION_API_ORIGIN).get_password().unwrap(), encoded);
+}
+
+#[test]
+fn release_reload_preserves_session_sync_preferences_and_does_not_rewrite_keychain_acl() {
+    let _serial = serial();
+    let f = Fixture::new();
+    let first = f.load();
+    let credential = first.credential().unwrap();
+    let preferences = serde_json::to_value(f.saved()).unwrap();
+    let entry = f.entries.lock().unwrap()[&(SERVICE.into(), origins::PRODUCTION_API_ORIGIN.into())].clone();
+    let writes = entry.writes.load(Ordering::SeqCst);
+    let deletes = entry.deletes.load(Ordering::SeqCst);
+    drop(first);
+    let upgraded = f.load();
+    assert_eq!(upgraded.credential().unwrap().token, credential.token);
+    assert_eq!(serde_json::to_value(f.saved()).unwrap(), preferences);
+    assert_eq!(entry.writes.load(Ordering::SeqCst), writes);
+    assert_eq!(entry.deletes.load(Ordering::SeqCst), deletes);
 }

@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { ChevronDown, RefreshCw, Settings, X } from 'lucide-react';
 import type { Period, ProviderID, UsageTotals } from '../lib/types';
 import { closeWindow, maximizeWindow, minimizeWindow, native } from '../lib/desktop';
@@ -29,12 +30,14 @@ export function PeriodControl({ period, setPeriod, small = false }: { period: Pe
   return <div className="period-control" aria-label="Usage Period">{(['today', 'week', 'month'] as Period[]).map(p =>
     <button key={p} aria-pressed={period === p} className={p === period ? 'selected' : ''} onClick={() => setPeriod(p)}>{p.charAt(0).toUpperCase() + p.slice(1)}</button>)}</div>;
 }
-export function Sparkline({ trend, labels = false }: { trend: UsageTotals['trend']; labels?: boolean }) {
-  const values = trend.map(p => p.tokens); const min = Math.min(...values) * .7; const max = Math.max(1, ...values);
+export function Sparkline({ trend, labels = false, filled = false }: { trend: UsageTotals['trend']; labels?: boolean; filled?: boolean }) {
+  const gradient = useId().replace(/:/g, '');
+  const values = trend.map(p => p.tokens); const min = filled ? 0 : Math.min(...values) * .7; const max = Math.max(1, ...values);
   const points = values.map((v, i) => [12 + i * 54, 65 - (v - min) / (max - min || 1) * 51]);
   const path = points.map(([x, y], i) => i === 0 ? 'M ' + x + ' ' + y : ' C ' + (points[i - 1][0] + 24) + ' ' + points[i - 1][1] + ', ' + (x - 24) + ' ' + y + ', ' + x + ' ' + y).join('');
-  return <div className={'sparkline' + (labels ? ' labeled' : '')}><svg viewBox="0 0 350 80" role="img" aria-label="Token Usage Over Seven Days">
-    <path d={path} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+  return <div className={'sparkline' + (labels ? ' labeled' : '')}><svg viewBox="0 0 350 80" preserveAspectRatio={filled ? 'none' : undefined} role="img" aria-label="Token Usage Over Seven Days">
+    {filled && <><defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="currentColor" stopOpacity=".23" /><stop offset="100%" stopColor="currentColor" stopOpacity="0" /></linearGradient></defs><path d={path + ' L 336 80 L 12 80 Z'} fill={`url(#${gradient})`} /></>}
+    <path d={path} fill="none" stroke="currentColor" strokeWidth={filled ? 2 : 2.6} vectorEffect={filled ? "non-scaling-stroke" : undefined} strokeLinecap="round" />
   </svg>{labels && <div className="sparkline-labels">{trend.map(point => <span key={point.label}>{point.label}</span>)}</div>}</div>;
 }
 export function SettingsButton({ onClick }: { onClick: () => void }) {

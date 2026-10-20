@@ -1,6 +1,15 @@
 use super::{CloudStore, Credential, Preferences, Status};
 use serde_json::{json, Value};
 impl CloudStore {
+    // Read a share period without changing dashboard/widget rank preferences.
+    pub fn share_rank(&self, period: &str) -> Result<Value, String> {
+        if !matches!(period, "Today" | "Week" | "Month") {
+            return Err("Choose Today, Week or Month for Rank Battle.".into());
+        }
+        let credential = self.credential()?;
+        let reply = self.request("GET", &format!("/api/rank?period={period}"), Some(&credential.token), None)?;
+        Ok(json!({"position": reply["own"]["rank"], "tokens": reply["own"]["tokens"], "updatedAt": reply["generatedAt"]}))
+    }
     pub fn request_code(&self, email: String) -> Result<Value, String> {
         if email.len() > 320 {
             return Err("Enter a valid email address.".into());
@@ -172,5 +181,38 @@ impl CloudStore {
             super::origins::page_url(origin, page, self.status()?.rank_period)?
         };
         open::that(url).map_err(|_| "The DevClash page could not be opened in your browser.".into())
+    }
+}
+
+#[cfg(test)]
+mod share_tests {
+    use super::super::*;
+    use std::{io::{BufRead, BufReader, Write}, net::TcpListener, thread};
+    #[test]
+    fn share_rank_reads_requested_period_without_mutating_dashboard_or_sync() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let origin = format!("http://{}", listener.local_addr().unwrap());
+        let server = thread::spawn(move || {
+            for (period, own) in [("Week", json!({"rank":42,"tokens":123456,"private":"excluded"})), ("Month", Value::Null)] {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream.set_read_timeout(Some(std::time::Duration::from_secs(5))).unwrap();
+                let mut reader = BufReader::new(stream.try_clone().unwrap());
+                let mut first = String::new(); reader.read_line(&mut first).unwrap();
+                assert!(first.starts_with(&format!("GET /api/rank?period={period} ")));
+                loop { let mut line = String::new(); reader.read_line(&mut line).unwrap(); if line == "\r\n" { break; } }
+                let body = json!({"own":own,"generatedAt":"2026-10-20T12:00:00Z"}).to_string();
+                write!(stream,"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",body.len()).unwrap();
+            }
+        });
+        let directory = std::env::temp_dir().join(format!("devclash-share-rank-{}", Utc::now().timestamp_nanos_opt().unwrap()));
+        let cloud = CloudStore::load_with_origins(directory.clone(), &origin, None);
+        *cloud.credential.lock().unwrap() = Some(Credential {token:"synthetic-session".into(), user:User{id:"qa".into(),email:"qa@example.invalid".into()}, expires_at:(Utc::now()+chrono::Duration::hours(1)).to_rfc3339()});
+        let before = serde_json::to_value(cloud.status().unwrap()).unwrap();
+        assert!(cloud.share_rank("Week&user=other").is_err());
+        assert_eq!(cloud.share_rank("Week").unwrap(), json!({"position":42,"tokens":123456,"updatedAt":"2026-10-20T12:00:00Z"}));
+        assert!(cloud.share_rank("Month").unwrap()["position"].is_null());
+        assert_eq!(serde_json::to_value(cloud.status().unwrap()).unwrap(), before);
+        server.join().unwrap();
+        if directory.exists() { std::fs::remove_dir_all(directory).unwrap(); }
     }
 }

@@ -10,6 +10,8 @@ mod projects;
 pub mod records;
 mod sync;
 #[cfg(test)]
+mod pending_tests;
+#[cfg(test)]
 mod origin_migration_tests;
 #[cfg(test)]
 mod tests;
@@ -473,3 +475,12 @@ impl CloudStore {
 mod sync_checkpoint_tests;
 
 pub(crate) use sync::jitter_seconds;
+
+impl CloudStore {
+    pub(crate) fn normalize_pending_usage<'a>(
+        &self, events: impl IntoIterator<Item = &'a crate::usage::UsageEvent>, revision: Option<&str>,
+    ) -> Result<Vec<records::CloudRecord>, String> {
+        let preferences = self.preferences.lock().map_err(|_| "Cloud preferences unavailable.")?;
+        Ok(records::normalize_pending(events, revision, &preferences.acknowledged))
+    }
+}

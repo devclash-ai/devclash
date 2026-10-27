@@ -1,15 +1,34 @@
 //! Local identity comes only from an explicitly recorded absolute workspace directory.
 //! Normalize lexically: removed workspaces must keep their identity without filesystem probes.
 use serde::{Deserialize, Serialize};
+use std::{collections::HashSet, ops::Deref, sync::Arc};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Project {
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Project(Arc<ProjectDetails>);
+
+#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct ProjectDetails {
     pub id: String,
     pub name: String,
     pub directory: String,
 }
 
+impl Deref for Project {
+    type Target = ProjectDetails;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 impl Project {
+    pub(super) fn share(&mut self, pool: &mut HashSet<Self>) {
+        if let Some(existing) = pool.get(self) {
+            *self = existing.clone();
+        } else {
+            pool.insert(self.clone());
+        }
+    }
+
     pub fn from_directory(directory: &str) -> Option<Self> {
         let directory = normalize(directory)?;
         let name = directory
@@ -17,11 +36,11 @@ impl Project {
             .find(|part| !part.is_empty())
             .unwrap_or("/")
             .to_owned();
-        Some(Self {
+        Some(Self(Arc::new(ProjectDetails {
             id: format!("project:{}", crate::cloud::records::hash(&directory)),
             name,
             directory,
-        })
+        })))
     }
 }
 
@@ -115,5 +134,28 @@ mod tests {
         for invalid in ["", "app", "../app", "~/app", r"C:app", "null\0path"] {
             assert!(Project::from_directory(invalid).is_none(), "{invalid:?}");
         }
+    }
+}
+
+#[cfg(test)]
+mod sharing_tests {
+    use super::*;
+    #[test]
+    fn legacy_json_roundtrip_and_shared_clones_preserve_exact_project_metadata() {
+        let json = r#"{"id":"legacy-id","name":"app","directory":"/synthetic/app"}"#;
+        let mut first: Project = serde_json::from_str(json).unwrap();
+        let mut second: Project = serde_json::from_str(json).unwrap();
+        assert!(!Arc::ptr_eq(&first.0, &second.0));
+        let mut pool = HashSet::new();
+        first.share(&mut pool);
+        second.share(&mut pool);
+        assert!(Arc::ptr_eq(&first.0, &second.0));
+        assert!(Arc::ptr_eq(&first.0, &first.clone().0));
+        assert_eq!(serde_json::to_string(&first).unwrap(), json);
+        let mut changed: Project =
+            serde_json::from_str(&json.replace("/synthetic/app", "/different/app")).unwrap();
+        changed.share(&mut pool);
+        assert!(!Arc::ptr_eq(&first.0, &changed.0));
+        assert_eq!(pool.len(), 2);
     }
 }

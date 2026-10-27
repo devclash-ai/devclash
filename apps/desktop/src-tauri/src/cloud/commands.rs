@@ -37,7 +37,7 @@ pub fn automatic_sync(app: &tauri::AppHandle) {
     }
     let result = app
         .state::<UsageStore>()
-        .cloud_records()
+        .pending_cloud_records(&app.state::<CloudStore>())
         .and_then(|records| app.state::<CloudStore>().sync_automatic_with_progress(records, |status| {
             if let Err(error) = app.emit("cloud-updated", &status) {
                 eprintln!("Cloud progress could not be published: {error}");
@@ -138,7 +138,7 @@ pub async fn cloud_set_sync(app: tauri::AppHandle, enabled: bool) -> Result<Stat
 #[tauri::command]
 pub async fn cloud_sync_now(app: tauri::AppHandle) -> Result<Status, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let records = app.state::<UsageStore>().cloud_records()?;
+        let records = app.state::<UsageStore>().pending_cloud_records(&app.state::<CloudStore>())?;
         let cloud = app.state::<CloudStore>();
         let status = publish(&app, cloud.sync(records))?;
         if status.user.is_some() {

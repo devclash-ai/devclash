@@ -3,11 +3,17 @@ use chrono::{DateTime, Local, TimeZone};
 use std::collections::HashMap;
 
 pub fn totals(events: Vec<UsageEvent>) -> Vec<UsageEvent> {
+    totals_ref(&events)
+}
+
+pub fn totals_ref(events: &[UsageEvent]) -> Vec<UsageEvent> {
     let mut groups: HashMap<(String, String, String, Option<String>), UsageEvent> = HashMap::new();
-    for mut event in events {
-        if event.cost_usd.is_none() {
-            event.unpriced_tokens = event.tokens;
-        }
+    for event in events {
+        let unpriced_tokens = if event.cost_usd.is_none() {
+            event.tokens
+        } else {
+            event.unpriced_tokens
+        };
         let Ok(date) = DateTime::parse_from_rfc3339(&event.timestamp) else {
             continue;
         };
@@ -25,7 +31,7 @@ pub fn totals(events: Vec<UsageEvent>) -> Vec<UsageEvent> {
                 (some @ Some(_), None) | (None, some @ Some(_)) => some,
                 _ => None,
             };
-            total.unpriced_tokens = total.unpriced_tokens.saturating_add(event.unpriced_tokens);
+            total.unpriced_tokens = total.unpriced_tokens.saturating_add(unpriced_tokens);
             total.cost_source = match (total.cost_source, event.cost_source) {
                 (Some(a), Some(b)) if a != b => Some(CostSource::Mixed),
                 (Some(source), _) | (_, Some(source)) => Some(source),
@@ -44,7 +50,8 @@ pub fn totals(events: Vec<UsageEvent>) -> Vec<UsageEvent> {
                 UsageEvent {
                     id: format!("daily:{}", crate::cloud::records::hash(&identity)),
                     timestamp: noon.to_rfc3339(),
-                    ..event
+                    unpriced_tokens,
+                    ..event.clone()
                 },
             );
         }

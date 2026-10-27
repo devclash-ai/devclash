@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fs::{File, OpenOptions},
-    io::{Read, Write},
+    io::{BufReader, BufWriter, Write},
     path::Path,
 };
 
@@ -65,10 +65,8 @@ pub fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T, String> {
         path.with_extension("tmp"),
         path.with_extension("bak"),
     ] {
-        match private_file(&candidate, false).and_then(|mut file| {
-            let mut bytes = Vec::new();
-            file.read_to_end(&mut bytes).map_err(|e| e.to_string())?;
-            serde_json::from_slice(&bytes).map_err(|e| e.to_string())
+        match private_file(&candidate, false).and_then(|file| {
+            serde_json::from_reader(BufReader::new(file)).map_err(|e| e.to_string())
         }) {
             Ok(value) => return Ok(value),
             Err(reason) => error = reason,
@@ -82,12 +80,20 @@ pub fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), String> {
         .lock()
         .map_err(|_| "Local storage could not be opened.".to_owned())?;
     let temporary = path.with_extension("tmp");
-    let bytes = serde_json::to_vec(value).map_err(|e| e.to_string())?;
-    let mut file = private_file(&temporary, true)?;
-    file.write_all(&bytes)
-        .and_then(|_| file.sync_all())
-        .map_err(|e| e.to_string())?;
-    drop(file);
+    let file = private_file(&temporary, true)?;
+    let mut writer = BufWriter::new(file);
+    if let Err(error) = serde_json::to_writer(&mut writer, value)
+        .map_err(|e| e.to_string())
+        .and_then(|_| writer.flush().map_err(|e| e.to_string()))
+        .and_then(|_| writer.get_ref().sync_all().map_err(|e| e.to_string()))
+    {
+        // A serialization failure may leave syntactically valid but incomplete JSON.
+        // Never let recovery mistake that temporary file for a successful checkpoint.
+        drop(writer);
+        let _ = std::fs::remove_file(&temporary);
+        return Err(error);
+    }
+    drop(writer);
     #[cfg(target_os = "windows")]
     if path.exists() {
         let backup = path.with_extension("bak");
@@ -106,6 +112,24 @@ pub fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn failed_streamed_serialization_cannot_be_recovered_as_a_checkpoint() {
+        struct FailsAfterWriting;
+        impl Serialize for FailsAfterWriting {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                let _ = 42u64.serialize(serializer)?;
+                Err(serde::ser::Error::custom("synthetic failure"))
+            }
+        }
+        let path =
+            std::env::temp_dir().join(format!("devclash-failed-save-{}.json", std::process::id()));
+        write_json(&path, &vec![1u64, 2]).unwrap();
+        assert!(write_json(&path, &FailsAfterWriting).is_err());
+        assert!(!path.with_extension("tmp").exists());
+        assert_eq!(read_json::<Vec<u64>>(&path).unwrap(), vec![1, 2]);
+        std::fs::remove_file(path).unwrap();
+    }
+
     #[test]
     fn interrupted_save_recovers_a_complete_pending_queue() {
         let path =

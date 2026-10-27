@@ -119,7 +119,7 @@ pub(super) fn scan_roots(
     let roots = super::synara_roots::canonical_roots(roots, &mut errors);
     let mut snapshot = Snapshot::default();
     let mut seen = HashSet::new();
-    let mut records = Vec::new();
+    let mut ordered_paths = Vec::new();
     let since = Utc::now() - Duration::days(90);
     snapshot.errors.extend(errors);
     for (provider, root) in roots {
@@ -181,11 +181,18 @@ pub(super) fn scan_roots(
                 };
                 match parsed {
                     Ok(parsed) => {
+                        let mut projects = HashSet::new();
                         let recent = parsed
                             .into_iter()
                             .filter(|record| {
                                 DateTime::parse_from_rfc3339(&record.event.timestamp)
                                     .is_ok_and(|date| date >= since)
+                            })
+                            .map(|mut record| {
+                                if let Some(project) = &mut record.event.project {
+                                    project.share(&mut projects);
+                                }
+                                record
                             })
                             .collect();
                         cache.insert(
@@ -200,9 +207,7 @@ pub(super) fn scan_roots(
                     Err(_) => failed += 1,
                 }
             }
-            if let Some(file) = cache.get(&path) {
-                records.extend(file.records.clone());
-            }
+            ordered_paths.push(path);
         }
         if failed > 0 {
             eprintln!("{provider}: {failed} local usage files could not be read");
@@ -212,16 +217,22 @@ pub(super) fn scan_roots(
         }
     }
     cache.retain(|path, _| seen.contains(path));
+    let mut opencode_records = Vec::new();
     if include_opencode {
         let opencode = super::opencode::scan(since);
         if opencode.available {
             snapshot.available_providers.push("opencode".into());
         }
         snapshot.errors.extend(opencode.errors);
-        records.extend(opencode.records);
+        opencode_records = opencode.records;
     }
-    snapshot.events = dedup(records)
+    let records = ordered_paths
         .iter()
+        .filter_map(|path| cache.get(path))
+        .flat_map(|file| file.records.iter())
+        .chain(opencode_records.iter());
+    snapshot.events = dedup_refs(records)
+        .into_iter()
         .map(|record| record.priced(pricing))
         .collect();
     snapshot
@@ -271,7 +282,52 @@ pub fn dedup(records: Vec<Record>) -> Vec<Record> {
     });
     result
 }
-fn preferred(new: &Record, old: &Record) -> bool {
+// Borrow the parsed cache; only the winning records become priced events.
+pub(super) fn dedup_refs<'a>(records: impl IntoIterator<Item = &'a Record>) -> Vec<&'a Record> {
+    let mut by_id: HashMap<(&str, &str), &Record> = HashMap::new();
+    for record in records {
+        let key = (record.event.provider.as_str(), record.event.id.as_str());
+        match by_id.get_mut(&key) {
+            Some(old) if preferred(&record, old) => *old = record,
+            None => {
+                by_id.insert(key, record);
+            }
+            _ => {}
+        }
+    }
+    let mut by_message: HashMap<&str, &Record> = HashMap::new();
+    let mut result = Vec::new();
+    let mut ordered = by_id.into_values().collect::<Vec<_>>();
+    ordered.sort_by(|a, b| a.event.id.cmp(&b.event.id));
+    for record in ordered {
+        if record.event.provider == "claude" {
+            if let Some(message) = &record.message {
+                match by_message.get_mut(message.as_str()) {
+                    Some(old) if old.sidechain || record.sidechain => {
+                        if preferred(&record, old) {
+                            *old = record;
+                        }
+                    }
+                    Some(_) => result.push(record),
+                    None => {
+                        by_message.insert(message.as_str(), record);
+                    }
+                }
+                continue;
+            }
+        }
+        result.push(record);
+    }
+    result.extend(by_message.into_values());
+    result.sort_by(|a, b| {
+        a.event
+            .timestamp
+            .cmp(&b.event.timestamp)
+            .then(a.event.id.cmp(&b.event.id))
+    });
+    result
+}
+pub(super) fn preferred(new: &Record, old: &Record) -> bool {
     let buckets = |record: &Record| {
         record.breakdown.map(|b| {
             (

@@ -28,16 +28,40 @@ pub fn hash(value: &str) -> String {
 }
 impl CloudRecord {
     pub fn acknowledgement(&self) -> String {
-        hash(&format!(
-            "{}:{}:{}",
-            self.provider,
-            self.id,
-            self.revision_at.as_deref().unwrap_or("event")
-        ))
+        acknowledgement(&self.provider, &self.id, self.revision_at.as_deref())
     }
 }
+fn acknowledgement(provider: &str, id: &str, revision: Option<&str>) -> String {
+    hash(&format!("{provider}:{id}:{}", revision.unwrap_or("event")))
+}
+
+pub fn normalize_pending<'a>(
+    events: impl IntoIterator<Item = &'a UsageEvent>,
+    cursor_revision: Option<&str>,
+    acknowledged: &HashSet<String>,
+) -> Vec<CloudRecord> {
+    normalize_selected(events, cursor_revision, |provider, id, revision| {
+        !acknowledged.contains(&acknowledgement(provider, id, revision))
+    })
+}
+
 // Called on collector records before daily::totals applies the device's calendar.
 pub fn normalize(events: &[UsageEvent], cursor_revision: Option<&str>) -> Vec<CloudRecord> {
+    normalize_iter(events.iter(), cursor_revision)
+}
+
+pub fn normalize_iter<'a>(
+    events: impl IntoIterator<Item = &'a UsageEvent>,
+    cursor_revision: Option<&str>,
+) -> Vec<CloudRecord> {
+    normalize_selected(events, cursor_revision, |_, _, _| true)
+}
+
+fn normalize_selected<'a>(
+    events: impl IntoIterator<Item = &'a UsageEvent>,
+    cursor_revision: Option<&str>,
+    keep: impl Fn(&str, &str, Option<&str>) -> bool,
+) -> Vec<CloudRecord> {
     let mut records = Vec::new();
     let mut cursor: BTreeMap<(String, String), CloudRecord> = BTreeMap::new();
     let mut seen = HashSet::new();
@@ -63,11 +87,17 @@ pub fn normalize(events: &[UsageEvent], cursor_revision: Option<&str>) -> Vec<Cl
         if event.id.starts_with("daily:") || event.tokens == 0 {
             continue;
         }
-        if !seen.insert((event.provider.clone(), event.id.clone())) {
+        let id = hash(&format!("{provider}:{}", event.id));
+        // Append events are immutable after acknowledgement. Exclude them before
+        // allocating strings, dedup keys, or the full historical upload vector.
+        if provider != "Cursor" && !keep(provider, &id, None) {
+            continue;
+        }
+        if !seen.insert((event.provider.as_str(), event.id.as_str())) {
             continue;
         }
         let mut record = CloudRecord {
-            id: hash(&format!("{provider}:{}", event.id)),
+            id,
             provider: provider.into(),
             model: event.model.clone(),
             tokens: event.tokens,
@@ -111,7 +141,13 @@ pub fn normalize(events: &[UsageEvent], cursor_revision: Option<&str>) -> Vec<Cl
             cursor.insert(key, record);
         }
     }
-    records.extend(cursor.into_values());
+    // Cursor acknowledgement belongs to a complete day/model bucket and fetch
+    // revision. Filter only after aggregation, never individual component rows.
+    records.extend(
+        cursor
+            .into_values()
+            .filter(|record| keep(&record.provider, &record.id, record.revision_at.as_deref())),
+    );
     records.sort_by(|a, b| a.occurred_at.cmp(&b.occurred_at).then(a.id.cmp(&b.id)));
     records
 }

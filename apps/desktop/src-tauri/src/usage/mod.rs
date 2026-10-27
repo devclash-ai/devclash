@@ -17,10 +17,14 @@ mod project;
 #[cfg(test)]
 mod project_tests;
 pub use project::Project;
+#[cfg(test)]
+mod memory_tests;
 mod scan;
 mod synara_roots;
 
-use crate::cloud::records::{normalize, CloudRecord};
+#[cfg(test)]
+use crate::cloud::records::normalize;
+use crate::cloud::records::CloudRecord;
 use crate::pricing::PricingStore;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
@@ -226,6 +230,25 @@ struct Cache {
     cursor_refresh: cursor::FetchState,
 }
 impl Cache {
+    // The JSON format remains unchanged; share repeated metadata only in memory.
+    fn share_projects(&mut self) {
+        let mut pool = std::collections::HashSet::new();
+        let events = self
+            .files
+            .values_mut()
+            .flat_map(|file| file.records.iter_mut().map(|r| &mut r.event))
+            .chain(self.snapshot.events.iter_mut())
+            .chain(
+                self.cursor_api
+                    .iter_mut()
+                    .flat_map(|usage| usage.records.iter_mut().map(|r| &mut r.event)),
+            );
+        for event in events {
+            if let Some(project) = &mut event.project {
+                project.share(&mut pool);
+            }
+        }
+    }
     fn migrate(&mut self) {
         // Reparse unchanged local source files once to recover explicit workspace metadata.
         // Verified Cursor API history is independent of this file cache and stays intact.
@@ -265,6 +288,7 @@ impl UsageStore {
             .filter(|cache| matches!(cache.version, 1..=5))
             .unwrap_or_default();
         cache.migrate();
+        cache.share_projects();
         if let Some(error) = cursor::discard_unusable_account(&mut cache.cursor_api) {
             cache
                 .snapshot
@@ -357,8 +381,13 @@ impl UsageStore {
         *self
             .cloud_events
             .lock()
-            .map_err(|_| "Cloud usage unavailable")? = snapshot.events.clone();
-        snapshot.events = daily::totals(snapshot.events);
+            .map_err(|_| "Cloud usage unavailable")? = std::mem::take(&mut snapshot.events);
+        snapshot.events = daily::totals_ref(
+            &self
+                .cloud_events
+                .lock()
+                .map_err(|_| "Cloud usage unavailable")?,
+        );
         let limits = limits::read();
         snapshot.quotas = limits.quotas;
         snapshot.quota_errors = limits.errors;
@@ -380,20 +409,35 @@ impl UsageStore {
         Ok(snapshot)
     }
     pub fn cloud_records(&self) -> Result<Vec<CloudRecord>, String> {
+        self.collect_cloud_records(None)
+    }
+    pub fn pending_cloud_records(
+        &self,
+        cloud: &crate::cloud::CloudStore,
+    ) -> Result<Vec<CloudRecord>, String> {
+        self.collect_cloud_records(Some(cloud))
+    }
+    fn collect_cloud_records(
+        &self,
+        cloud: Option<&crate::cloud::CloudStore>,
+    ) -> Result<Vec<CloudRecord>, String> {
+        // Lock order: usage cache -> usage events -> cloud preferences. Cloud sync
+        // never holds preferences while calling the collector.
         let mut cache = self.cache.lock().map_err(|_| "Usage cache unavailable")?;
         self.discard_unusable_cursor(&mut cache)?;
         let events = self
             .cloud_events
             .lock()
             .map_err(|_| "Cloud usage unavailable")?;
-        let mature = syncable_events(&events, Utc::now());
-        Ok(normalize(
-            &mature,
-            cache
-                .cursor_api
-                .as_ref()
-                .map(|usage| usage.fetched_at.as_str()),
-        ))
+        let revision = cache
+            .cursor_api
+            .as_ref()
+            .map(|usage| usage.fetched_at.as_str());
+        let mature = syncable_event_refs(&events, Utc::now());
+        match cloud {
+            Some(cloud) => cloud.normalize_pending_usage(mature, revision),
+            None => Ok(crate::cloud::records::normalize_iter(mature, revision)),
+        }
     }
     fn discard_unusable_cursor(&self, cache: &mut Cache) -> Result<(), String> {
         if let Some(error) = cursor::discard_unusable_account(&mut cache.cursor_api) {
@@ -428,16 +472,19 @@ impl UsageStore {
         crate::storage::write_json(&self.path, cache)
     }
 }
+#[cfg(test)]
 fn syncable_events(events: &[UsageEvent], now: DateTime<Utc>) -> Vec<UsageEvent> {
+    syncable_event_refs(events, now).cloned().collect()
+}
+fn syncable_event_refs(
+    events: &[UsageEvent],
+    now: DateTime<Utc>,
+) -> impl Iterator<Item = &UsageEvent> {
     // Append-based source messages may still be settling. A verified API response is complete
     // for its fetch revision and must not gain additional rows just because time passes.
-    events
-        .iter()
-        .filter(|event| {
-            event.provider == "cursor"
-                || DateTime::parse_from_rfc3339(&event.timestamp)
-                    .is_ok_and(|date| date <= now - Duration::minutes(2))
-        })
-        .cloned()
-        .collect()
+    events.iter().filter(move |event| {
+        event.provider == "cursor"
+            || DateTime::parse_from_rfc3339(&event.timestamp)
+                .is_ok_and(|date| date <= now - Duration::minutes(2))
+    })
 }

@@ -1,31 +1,34 @@
 {
-  "version": "0.1.0-beta.9",
-  "notes": "# DevClash 0.1.0-beta.9\n\nShare your AI usage and actual public rank directly from the desktop app.\n\n- Open an in-app Share composer with Usage and Rank cards, selected periods, and optional token, provider and cost details.\n- Choose Simple, Community or Challenge captions, then edit the text before sharing.\n- Use rounded whole-number token labels, space for up to four providers, and a compact estimated-cost label beside its amount.\n- Copy the card and open an X draft with the caption. Paste the copied image into X and review before posting; nothing is published automatically.\n- Save the same card as a PNG or copy its text separately.\n- Export local usage diagnostics for duplicate investigations without prompts or credentials.\n- Isolate QA credentials from the production Keychain and retain the normal app signing identity for update continuity.\n\nThis remains a beta. Package verification and device checks are recorded separately from publication. Existing beta.8 installers remain unchanged.\n\nBuilt locally on native hosts. Source commit: 357281dda7ebaa307e01bb175328c2819ee01384.\n",
-  "pub_date": "2026-10-20T12:44:25.767246+00:00",
+  "version": "0.1.0-beta.10",
+  "notes": "# DevClash 0.1.0-beta.10\n\nLower memory use when tracking large AI usage histories and syncing them to the cloud.\n\n- Avoid full-history copies during scanning, deduplication, daily aggregation and cloud preparation.\n- Read and save local metadata caches through bounded buffers.\n- Share repeated project metadata, including when growing logs are reparsed.\n- Skip already-synced usage before allocating upload records, while preserving complete Cursor snapshots and retries.\n- Preserve usage totals, duplicate detection, saved history, account login, sync consent and display preferences.\n\nControlled local benchmarks showed substantially lower peak memory. Actual memory use depends on the size of your history and current activity. This remains a beta; package and device evidence is recorded separately. Existing beta.9 installers remain unchanged.\n\nBuilt locally on native hosts. Source commit: 4441bc0ab11ed40647d6d01ca7f38eebc5d259a9.\n\nAvailability: Mac (Apple Silicon and Intel) and Linux (DEB and AppImage) receive beta.10. Windows remains on its existing signed beta.9 release; beta.10 Windows packaging is deferred.\n",
+  "pub_date": "2026-10-27T06:53:15.521244+00:00",
   "platforms": {
     "darwin-aarch64": {
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/macos-aarch64-DevClash.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekVOVjE3eWtyV2o3Z1RDVjhFODBKZHMrZ0JFYXpjMm5KMHVKRGlnaDJhY3orZjJuWTc5eUltTkg0NzhKbkx6dno1V0VWMXlmOVcweDZrSUNBeGxSRkF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDk5MTczCWZpbGU6RGV2Q2xhc2guYXBwLnRhci5negl2ZXJzaW9uOjAuMS4wLWJldGEuOQpkWU9hbGpUNS9VQUQ4OHY0dVFZckQrdHdUbHNlWjh6NjlZRlpVZ01FVm9MWFVhaGVkd3JrZjlLaUhjTXRkcUJpU2cwMjJ0UVludGpFL1hmWDNMclJCUT09Cg=="
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/macos-aarch64-DevClash.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekRIQ1JWbzRZNDgxOWhyVXY4aVY1OTFnUk1NREpkNGNXV0M2S3RmQkp2Z29OY041VXVzWFdwQ0RPMzM0WEJZaU9hUFQzeGRlTEU5VmVhTlorc2h0L2dVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDgzMzkxCWZpbGU6RGV2Q2xhc2guYXBwLnRhci5negl2ZXJzaW9uOjAuMS4wLWJldGEuMTAKM1ROVlRuT2FxckM4bWpLNjJDYXlwd01Db29EOGdEVTFLZ3RlVEpCS2pHWWdUUTF1SHA1VE9hUUhwVXl6OGJ1eldBdHFhWThISkVicVZWa3k0SCtsQ3c9PQo="
     },
     "darwin-x86_64": {
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/macos-x86_64-DevClash.app.tar.gz",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ek51dk5YUXk0NzlXWXVDaXVBMXhvR0Q5WEtVc1F3MDQ4TmlBK3hEVU1QaEJhaGdtNmc0amNuYUR5M3dkYkc2WUo5VlZkMFovQjMyZjBEczIxc3RxRncwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDk5MzI4CWZpbGU6RGV2Q2xhc2guYXBwLnRhci5negl2ZXJzaW9uOjAuMS4wLWJldGEuOQpROTg1Z1lpS2xIUmM4aVd3Nm9EUFJhemNPaC9VV3lnMzFGdm9BS3E5WlFtaXorZE1MbWJhWnZMVlJJd09sTHJoOW5sSVpWWHF1T0UweHViODQ2V0RDUT09Cg=="
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/macos-x86_64-DevClash.app.tar.gz",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekExVjFBSHA1czUyMjZGdXBjZXFLTm1PdUk3RFBxREtVVnM0UmpUVlBmVThEWlliSVVGVnloSEdUZ00zTERUdlV6cm5vdUZwMWhTY3VXSm5GU1hCUUE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDgzNTMxCWZpbGU6RGV2Q2xhc2guYXBwLnRhci5negl2ZXJzaW9uOjAuMS4wLWJldGEuMTAKQVFKdzhScEtKN2haalAvNjFOQ3UwM3E0UnVxNXdFNGI5NFVNdFcyNVJoUUN3YU1JbFk1Rlp6ZlBCM3I1djluUURvMmZOQXFzUFU1aCtsNnloWXRIQkE9PQo="
+    },
+    "linux-x86_64-appimage": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/linux-x86_64-DevClash_0.1.0-beta.10_amd64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2elBYWHVNK0dvM2FiUFMrRi9OSDhMN3YweDR6UVBUc3BnclQrNGt3MXBPOVNMdFMrS2FoMFFOelZkYzZ6VFRCbDgxa2dIMTI3Y0tIbFRiVDV2TnRONFFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDgzNDc0CWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS4xMF9hbWQ2NC5BcHBJbWFnZQl2ZXJzaW9uOjAuMS4wLWJldGEuMTAKQnJNRm5jdEwrOG5GUDhWdjNMQmpXeE9zbkFEREw2VVE2c1lONG5yMHlIa3hjTTA1dmFVVXIvd0RuYVF5TmF4TElhbFFwUHhDcFpxbWp4UTVacWRUQlE9PQo="
+    },
+    "linux-x86_64-deb": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/linux-x86_64-DevClash_0.1.0-beta.10_amd64.deb",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekZ3OHlUZmJUU01aT2d2dXM0c2xrYXpPTjBUWTRSOHRCVUtmcUtGYXdoMVVTangxTjdOQnZ2b1JPWnNZSDkvWWhNU08yWFhBRU1kMStUTzFud1pzSXdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDgzNDc0CWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS4xMF9hbWQ2NC5kZWIJdmVyc2lvbjowLjEuMC1iZXRhLjEwCkg3S0R3K2ZRV3JRc0R0b0U5T0NhUG53S1RwS1RtSjRMcVF2RVlQY0FtOXBCUFdwb1NOMGlnRVM3bFE4RWtFYnFNQy9PcE44OFhLZEN0L3pFbFl1YkNRPT0K"
+    },
+    "linux-x86_64": {
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/linux-x86_64-DevClash_0.1.0-beta.10_amd64.AppImage",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2elBYWHVNK0dvM2FiUFMrRi9OSDhMN3YweDR6UVBUc3BnclQrNGt3MXBPOVNMdFMrS2FoMFFOelZkYzZ6VFRCbDgxa2dIMTI3Y0tIbFRiVDV2TnRONFFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDgzNDc0CWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS4xMF9hbWQ2NC5BcHBJbWFnZQl2ZXJzaW9uOjAuMS4wLWJldGEuMTAKQnJNRm5jdEwrOG5GUDhWdjNMQmpXeE9zbkFEREw2VVE2c1lONG5yMHlIa3hjTTA1dmFVVXIvd0RuYVF5TmF4TElhbFFwUHhDcFpxbWp4UTVacWRUQlE9PQo="
     },
     "windows-x86_64": {
       "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/windows-x86_64-DevClash_0.1.0-beta.9_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekNOVVpsNGo3SERtMkxuQ2NzNXA5RzYyVmt0VStsZzlQL3NFWU50QzlKUnQ2eGZZc1B2TFAyeDVKU2J5SjB0bTZMZEh2MzRQZU1RWFB2d3QyUUc2NXdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNTAwMjEwCWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS45X3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjEuMC1iZXRhLjkKOStSWFBueDhrZTdqWnhrbjNNYzFpdGlzRlQ0WmtxRGJNdGlLcy95RkVnbVpaUk9wTG50UUpuSHR1YzdWU0NFN1dKdGtxOEp0N3NybDBQK25xZjVyRHc9PQo="
-    },
-    "linux-x86_64-appimage": {
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/linux-x86_64-DevClash_0.1.0-beta.9_amd64.AppImage",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekRvcDZ2NlVIcFNXN1JsWVROeEwyZjRkME9nMzFEQVNYQXF0NmlsNm5jMjRaM0lvY1hyTFBnK1VzeFpBUjQrd01WQUxLV09JY2pPY1dYdERNQWhQeUFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDk5MjU0CWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS45X2FtZDY0LkFwcEltYWdlCXZlcnNpb246MC4xLjAtYmV0YS45CmNSTjIraHByd01EZkRNUlNyZXlxYURkWENSeHVVbFY3TlB1dzc4K2hxay9tRHBQMVp4UnRNd0dIS0dzN1lxSlJYb0ovc0FYYzBxL0VOei9aZkNlMEFnPT0K"
-    },
-    "linux-x86_64-deb": {
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/linux-x86_64-DevClash_0.1.0-beta.9_amd64.deb",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekNXcGFkNEpBbFhUN0xpa1NodHllQ29yMHpneGtrYlFJbjhuWFVhVkMzTjlhNXI2alNscVZOR2xYamdwSnhVSVNmN1VVUGlnN2t5M0daekJhdW4vZHdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDk5MjU0CWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS45X2FtZDY0LmRlYgl2ZXJzaW9uOjAuMS4wLWJldGEuOQpUSnFaeGdRZmFKbGpsZjA3UTlDajd4NDg0MmZDc3FSc2ZJby9DZ1A2OXpiLzFqN1Jpb1B0enBPZ1JFaUt0eWhjempBVTJkVXFjbU04KzJFT3RIb2lCdz09Cg=="
-    },
-    "linux-x86_64": {
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/linux-x86_64-DevClash_0.1.0-beta.9_amd64.AppImage",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekRvcDZ2NlVIcFNXN1JsWVROeEwyZjRkME9nMzFEQVNYQXF0NmlsNm5jMjRaM0lvY1hyTFBnK1VzeFpBUjQrd01WQUxLV09JY2pPY1dYdERNQWhQeUFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDk5MjU0CWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS45X2FtZDY0LkFwcEltYWdlCXZlcnNpb246MC4xLjAtYmV0YS45CmNSTjIraHByd01EZkRNUlNyZXlxYURkWENSeHVVbFY3TlB1dzc4K2hxay9tRHBQMVp4UnRNd0dIS0dzN1lxSlJYb0ovc0FYYzBxL0VOei9aZkNlMEFnPT0K"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkg3c0Ryd2Z2ekNOVVpsNGo3SERtMkxuQ2NzNXA5RzYyVmt0VStsZzlQL3NFWU50QzlKUnQ2eGZZc1B2TFAyeDVKU2J5SjB0bTZMZEh2MzRQZU1RWFB2d3QyUUc2NXdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNTAwMjEwCWZpbGU6RGV2Q2xhc2hfMC4xLjAtYmV0YS45X3g2NC1zZXR1cC5leGUJdmVyc2lvbjowLjEuMC1iZXRhLjkKOStSWFBueDhrZTdqWnhrbjNNYzFpdGlzRlQ0WmtxRGJNdGlLcy95RkVnbVpaUk9wTG50UUpuSHR1YzdWU0NFN1dKdGtxOEp0N3NybDBQK25xZjVyRHc9PQo=",
+      "version": "0.1.0-beta.9",
+      "notes": "# DevClash 0.1.0-beta.9\n\nShare your AI usage and actual public rank directly from the desktop app.\n\n- Open an in-app Share composer with Usage and Rank cards, selected periods, and optional token, provider and cost details.\n- Choose Simple, Community or Challenge captions, then edit the text before sharing.\n- Use rounded whole-number token labels, space for up to four providers, and a compact estimated-cost label beside its amount.\n- Copy the card and open an X draft with the caption. Paste the copied image into X and review before posting; nothing is published automatically.\n- Save the same card as a PNG or copy its text separately.\n- Export local usage diagnostics for duplicate investigations without prompts or credentials.\n- Isolate QA credentials from the production Keychain and retain the normal app signing identity for update continuity.\n\nThis remains a beta. Package verification and device checks are recorded separately from publication. Existing beta.8 installers remain unchanged.\n\nBuilt locally on native hosts. Source commit: 357281dda7ebaa307e01bb175328c2819ee01384.\n",
+      "pub_date": "2026-10-20T12:44:25.767246+00:00"
     }
   },
   "downloads": [
@@ -33,36 +36,37 @@
       "platform": "macos",
       "arch": "aarch64",
       "kind": "dmg",
-      "name": "macos-aarch64-DevClash_0.1.0-beta.9_aarch64.dmg",
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/macos-aarch64-DevClash_0.1.0-beta.9_aarch64.dmg"
+      "name": "macos-aarch64-DevClash_0.1.0-beta.10_aarch64.dmg",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/macos-aarch64-DevClash_0.1.0-beta.10_aarch64.dmg"
     },
     {
       "platform": "macos",
       "arch": "x86_64",
       "kind": "dmg",
-      "name": "macos-x86_64-DevClash_0.1.0-beta.9_x64.dmg",
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/macos-x86_64-DevClash_0.1.0-beta.9_x64.dmg"
+      "name": "macos-x86_64-DevClash_0.1.0-beta.10_x64.dmg",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/macos-x86_64-DevClash_0.1.0-beta.10_x64.dmg"
+    },
+    {
+      "platform": "linux",
+      "arch": "x86_64",
+      "kind": "AppImage",
+      "name": "linux-x86_64-DevClash_0.1.0-beta.10_amd64.AppImage",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/linux-x86_64-DevClash_0.1.0-beta.10_amd64.AppImage"
+    },
+    {
+      "platform": "linux",
+      "arch": "x86_64",
+      "kind": "deb",
+      "name": "linux-x86_64-DevClash_0.1.0-beta.10_amd64.deb",
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.10/linux-x86_64-DevClash_0.1.0-beta.10_amd64.deb"
     },
     {
       "platform": "windows",
       "arch": "x86_64",
       "kind": "nsis",
       "name": "windows-x86_64-DevClash_0.1.0-beta.9_x64-setup.exe",
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/windows-x86_64-DevClash_0.1.0-beta.9_x64-setup.exe"
-    },
-    {
-      "platform": "linux",
-      "arch": "x86_64",
-      "kind": "AppImage",
-      "name": "linux-x86_64-DevClash_0.1.0-beta.9_amd64.AppImage",
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/linux-x86_64-DevClash_0.1.0-beta.9_amd64.AppImage"
-    },
-    {
-      "platform": "linux",
-      "arch": "x86_64",
-      "kind": "deb",
-      "name": "linux-x86_64-DevClash_0.1.0-beta.9_amd64.deb",
-      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/linux-x86_64-DevClash_0.1.0-beta.9_amd64.deb"
+      "url": "https://github.com/devclash-ai/devclash/releases/download/v0.1.0-beta.9/windows-x86_64-DevClash_0.1.0-beta.9_x64-setup.exe",
+      "version": "0.1.0-beta.9"
     }
   ]
 }
